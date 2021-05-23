@@ -97,11 +97,18 @@ class Game(arcade.View):
         # joke please remove
         self.dont = False
         self.boss = boss.Boss()
+        self.shade = arcade.Sprite()
+        self.shade.texture = arcade.load_texture("Shade.png")
+        self.shade.scale = 20
+        self.shade.alpha = 30
+        self.z = False
 
         self.setup()
 
     def load_level(self, level):
-        self.my_map = arcade.tilemap.read_tmx("Levels/empty_map.tmx")
+        # self.my_map = arcade.tilemap.read_tmx("Levels/Forest/empty_map - Copy.tmx")
+        # self.my_map = arcade.tilemap.read_tmx("Levels/empty_map.tmx")
+        self.my_map = arcade.tilemap.read_tmx("Levels/Forest/Forest_test1.tmx")
         self.wall_list = arcade.tilemap.process_layer(self.my_map, 'Platforms',
                                                       0.3, use_spatial_hash=True)
         self.grass_list = arcade.tilemap.process_layer(self.my_map, 'Grass',
@@ -182,10 +189,11 @@ class Game(arcade.View):
                                  (20.0, 130.0), (-30.0, 130.0), (-50.0, 100.0)))
 
         self.backdrop = arcade.Sprite()
-        self.backdrop.texture = arcade.load_texture("Backdrop/Spec_background - Copy.png")
+        # self.backdrop.texture = arcade.load_texture("Backdrop/Spec_background - Copy.png")
+        self.backdrop.texture = arcade.load_texture("Backdrop/Forest_back2.png")
         self.backdrop.center_x = 2000
         self.backdrop.center_y = 1000
-        self.backdrop.scale = 1.7
+        self.backdrop.scale = 1.7*2
         """for i in range(5):
             boi = enemy.TestEnemy(self.player)
             boi.center_x = random.randint(100, 6000)
@@ -364,6 +372,9 @@ class Game(arcade.View):
             if changed and not self.dont:  # joke
                 arcade.set_viewport(self.view_left - SCREEN_WIDTH*.3, SCREEN_WIDTH*1.3 + self.view_left - 1,
                                     self.view_bottom - SCREEN_HEIGHT*0.3, SCREEN_HEIGHT*1.3 + self.view_bottom - 1)
+                #arcade.set_viewport(self.view_left, SCREEN_WIDTH + self.view_left - 1,
+                #                    self.view_bottom, SCREEN_HEIGHT + self.view_bottom - 1)
+
         if self.timertoautofocus > 0:
             self.timertoautofocus -= 1
         if self.interacting:
@@ -407,8 +418,22 @@ class Game(arcade.View):
                     self.health.texture = self.health.state[abs(self.player.health-4)]
                     if self.player.health <= 0:
                         exit()
-        self.health.center_x = self.view_left + 640*0.3 + 10
-        self.health.center_y = self.view_bottom + SCREEN_HEIGHT - 160*0.3 - 10
+        wind = arcade.get_viewport()
+        self.health.center_x = wind[0] + 640*0.3 + 10
+        self.health.center_y = wind[3] - 160*0.3 - 10
+        # self.health.center_x = self.view_left + 640*0.3 + 10
+        # self.health.center_y = self.view_bottom + SCREEN_HEIGHT - 160*0.3 - 10
+
+        self.shade.center_x = self.player.center_x
+        self.shade.center_y = self.player.center_y
+        if self.z:
+            self.shade.alpha += 0.2
+            if self.shade.alpha >= 60:
+                self.z = False
+        if self.shade.alpha <= 40:
+            self.z = True
+            for i in self.wall_list:
+                i.color = arcade.color.LIGHT_GRAY
 
     def on_draw(self):
         arcade.start_render()
@@ -436,6 +461,7 @@ class Game(arcade.View):
         self.grass_list.draw()
         self.grapple_list.draw()
         self.boss.on_draw()
+        self.shade.draw()
 
         if self.interacting:
             self.conv.on_draw()
@@ -480,6 +506,12 @@ class Game(arcade.View):
                 self.dont = True
             else:
                 self.dont = False
+        if key == arcade.key.KEY_1:
+            self.player.center_x = 500
+            self.player.center_y = 500
+        if key == arcade.key.KEY_3:
+            self.player.center_x = 3000
+            self.player.center_y = 3000
         if key == arcade.key.M:
             print(len(self.my_map.layers[7].layer_data)*96)
             print(len(self.my_map.layers[7].layer_data[0])*96)
@@ -575,7 +607,7 @@ class Game(arcade.View):
             self.conv.setup()
 
     def bossing(self):
-        self.boss.update()
+        # self.boss.update()
         diff_x = self.player.center_x - self.boss.gun.center_x
         diff_y = self.player.center_y - self.boss.gun.center_y
         angley = math.atan2(diff_y, diff_x)

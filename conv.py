@@ -182,7 +182,7 @@ class Conv(arcade.Sprite):
         self.printed_text = text.gen_letter_list(self.output, (((self.center_x - self.width // 2 +
                                                                  ((1200 // 5) * self.select)) + 4) - 2 + 100),
                                                  (self.center_y + ((self.height * 1.5) // 20) - self.height//3)
-                                                 - 5, 0.25, 36)
+                                                 - 5, 0.25)
 
     def read_list(self):
         if self.conv['output1'][f'out{self.conv_point}'][self.select - 1] is not None:
@@ -208,13 +208,13 @@ class Conv(arcade.Sprite):
         self.interact = True
         self.response = text.gen_letter_list(
             self.conv['output1'][f'out{self.conv_point}'][self.select - 1][0],
-            (self.center_x - self.width // 2 + (self.width // 18 * 5)), (self.center_y + ((self.height * 1.5) // 26 * 10) - self.height//3), 0.25, 36)
+            (self.center_x - self.width // 2 + (self.width // 18 * 5)), (self.center_y + ((self.height * 1.5) // 26 * 10) - self.height//3), 0.25)
         self.response1 = text.gen_letter_list(
             self.conv['output1'][f'out{self.conv_point}'][self.select - 1][1],
-            (self.center_x - self.width//2 + (self.width // 18 * 5)), (self.center_y + ((self.height * 1.5) // 26 * 7) - self.height//3), 0.25, 36)
+            (self.center_x - self.width//2 + (self.width // 18 * 5)), (self.center_y + ((self.height * 1.5) // 26 * 7) - self.height//3), 0.25)
         self.response2 = text.gen_letter_list(
             self.conv['output1'][f'out{self.conv_point}'][self.select - 1][2],
-            (self.center_x - self.width//2 + (self.width // 18 * 5)), (self.center_y + ((self.height * 1.5) // 26 * 4) - self.height//3), 0.25, 36)
+            (self.center_x - self.width//2 + (self.width // 18 * 5)), (self.center_y + ((self.height * 1.5) // 26 * 4) - self.height//3), 0.25)
         if self.conv['continuous'][f'inp{self.conv_point}'][self.select - 1] is not None:
             self.conv_point = self.conv['continuous'][f'inp{self.conv_point}'][self.select - 1]
             self.switch_chatt = True
@@ -224,20 +224,20 @@ class Conv(arcade.Sprite):
         self.interact = True
         self.response = text.gen_letter_list(
             self.conv['output1'][f'out{self.conv_point}'][self.select - 1][3],
-            (self.center_x-self.width//2 + (self.width // 18 * 5)), (self.center_y + ((self.height * 1.5) // 26 * 10) - self.height//3), 0.25, 36)
+            (self.center_x-self.width//2 + (self.width // 18 * 5)), (self.center_y + ((self.height * 1.5) // 26 * 10) - self.height//3), 0.25)
         self.response1 = text.gen_letter_list(
             self.conv['output1'][f'out{self.conv_point}'][self.select - 1][4],
-            (self.center_x-self.width//2 + (self.width // 18 * 5)), (self.center_y + ((self.height * 1.5) // 26 * 7) - self.height//3), 0.25, 36)
+            (self.center_x-self.width//2 + (self.width // 18 * 5)), (self.center_y + ((self.height * 1.5) // 26 * 7) - self.height//3), 0.25)
         self.response2 = text.gen_letter_list(
             self.conv['output1'][f'out{self.conv_point}'][self.select - 1][5],
-            (self.center_x-self.width//2 + (self.width // 18 * 5)), (self.center_y + ((self.height * 1.5) // 26 * 4) - self.height//3), 0.25, 36)
+            (self.center_x-self.width//2 + (self.width // 18 * 5)), (self.center_y + ((self.height * 1.5) // 26 * 4) - self.height//3), 0.25)
         self.twice = False
 
     def option_start(self):
         for i in range(len(self.conv['dialog1'][f'inp{self.conv_point}'])):
             hand = text.gen_letter_list(self.conv['dialog1'][f'inp{self.conv_point}'][i],
                                         (self.center_x-self.width//2 + (self.width / 5 * (i + 1)) + 4 + 100),
-                                        (self.center_y + (self.height // 20) - self.height//3), 0.25, 36)
+                                        (self.center_y + (self.height // 20) - self.height//3), 0.25)
             for s in hand:
                 s.alpha = 100
             self.printed_text_list.extend(hand)
