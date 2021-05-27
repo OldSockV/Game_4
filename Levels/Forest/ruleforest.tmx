@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.4" tiledversion="1.4.1" orientation="orthogonal" renderorder="right-down" width="51" height="129" tilewidth="160" tileheight="160" infinite="0" nextlayerid="7" nextobjectid="1">
+<map version="1.5" tiledversion="1.6.0" orientation="orthogonal" renderorder="right-down" width="51" height="129" tilewidth="160" tileheight="160" infinite="0" nextlayerid="7" nextobjectid="1">
  <tileset firstgid="1" source="../../Tilemaps/Wireframe.tsx"/>
  <tileset firstgid="10" source="../../Tilemaps/Forest_Tiles.tsx"/>
  <tileset firstgid="276" source="../../Tilemaps/Wireframe16.tsx"/>

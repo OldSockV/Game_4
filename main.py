@@ -5,6 +5,10 @@ import math
 import text
 import conv
 import Dialogues.Test_level
+import json
+# with open("Levels/Forest/Leaves/leaves.world") as forest_world:
+with open("Levels/Forest/Leaves/leaves.world") as forest_world:
+    data = json.load(forest_world)
 
 import boss
 
@@ -12,8 +16,9 @@ import boss
 # UPDATES_PER_FRAME = 4
 SCREEN_WIDTH = 1200
 SCREEN_HEIGHT = 700
+SCREEN_ALT = 0.3
 JUMP_SPEED = 14
-GRAVITY = 1.4
+GRAVITY = 1
 
 
 class Game(arcade.View):
@@ -47,7 +52,7 @@ class Game(arcade.View):
         self.origin_dist = None
         self.grapple_velocity = None
         self.time = 0
-        self.level = 1
+        self.level = 0
         self.view_left = 0
         self.view_bottom = 0
         self.grass_list = None
@@ -103,37 +108,202 @@ class Game(arcade.View):
         self.shade.alpha = 30
         self.z = False
 
+        self.gate_list = None
+        self.numb = None
+        self.prev = None
+        self.world_map = {}
+        self.current = None
+        self.room_list = {}
+
         self.setup()
 
     def load_level(self, level):
-        # self.my_map = arcade.tilemap.read_tmx("Levels/Forest/empty_map - Copy.tmx")
-        # self.my_map = arcade.tilemap.read_tmx("Levels/empty_map.tmx")
-        self.my_map = arcade.tilemap.read_tmx("Levels/Forest/Forest_test1.tmx")
+        self.my_map = level
         self.wall_list = arcade.tilemap.process_layer(self.my_map, 'Platforms',
                                                       0.3, use_spatial_hash=True)
-        self.grass_list = arcade.tilemap.process_layer(self.my_map, 'Grass',
-                                                       0.3, use_spatial_hash=False)
-        self.tiling_list = arcade.tilemap.process_layer(self.my_map, 'Back',
-                                                        0.3, use_spatial_hash=False)
-        self.back_list = arcade.tilemap.process_layer(self.my_map, 'Bakcground',
+        layer_list = []
+        print(f'num layers{len(self.my_map.layers)}')
+        for i in range(len(self.my_map.layers)):
+            b = self.my_map.layers[i].name
+            print("g")
+            if b == "Gate":
+                self.numb = i
+                print(self.numb)
+            layer_list.append(b)
+        if 'Grass' in layer_list:
+            self.grass_list = arcade.tilemap.process_layer(self.my_map, 'Grass',
+                                                           0.3, use_spatial_hash=False)
+        if 'Details' in layer_list:
+            self.detail_list = arcade.tilemap.process_layer(self.my_map, 'Details',
+                                                            0.3, use_spatial_hash=False)
+            self.grass_list.extend(self.detail_list)
+        if 'Back' in layer_list:
+            self.tiling_list = arcade.tilemap.process_layer(self.my_map, 'Back',
+                                                            0.3, use_spatial_hash=False)
+        if 'Background' in layer_list:
+            self.back_list = arcade.tilemap.process_layer(self.my_map, 'Background',
+                                                          0.3, use_spatial_hash=False)
+        if 'Climbable' in layer_list:
+            self.platform_list = arcade.tilemap.process_layer(self.my_map, "Climbable",
+                                                              0.3, use_spatial_hash=True)
+        if 'Interactibles' in layer_list:
+            self.interactables_list = arcade.process_layer(self.my_map, 'Interactibles',
+                                                           0.3, use_spatial_hash=False)
+        if 'Grapple' in layer_list:
+            self.grapple_list = arcade.process_layer(self.my_map, 'Grapple',
+                                                     0.3, use_spatial_hash=False)
+        if 'Actuators' in layer_list:
+            self.actuator_list = arcade.process_layer(self.my_map, 'Actuators',
                                                       0.3, use_spatial_hash=False)
-        self.detail_list = arcade.tilemap.process_layer(self.my_map, 'Details',
-                                                        0.3, use_spatial_hash=False)
-        self.platform_list = arcade.tilemap.process_layer(self.my_map, "Climbable",
-                                                          0.3, use_spatial_hash=True)
-        self.interactables_list = arcade.process_layer(self.my_map, 'Interactibles',
-                                                       0.3, use_spatial_hash=False)
-        self.grapple_list = arcade.process_layer(self.my_map, 'Grapple',
-                                                 0.3, use_spatial_hash=False)
-        self.actuator_list = arcade.process_layer(self.my_map, 'Actuators',
+            for i in self.actuator_list:
+                i.identify = 1
+                i.origin = i.texture
+        if 'Door' in layer_list:
+            self.door_list = arcade.process_layer(self.my_map, 'Door',
                                                   0.3, use_spatial_hash=False)
-        for i in self.actuator_list:
-            i.identify = 1
-            i.origin = i.texture
-        self.door_list = arcade.process_layer(self.my_map, 'Door',
-                                              0.3, use_spatial_hash=False)
+        if 'Gate' in layer_list:
+            self.gate_list = arcade.process_layer(self.my_map, 'Gate',
+                                                  0.3, use_spatial_hash=False)
+            print(self.my_map.layers[self.numb])
+            if self.prev is None:
+                self.player.center_x = 600
+                self.player.center_y = 600
+            else:
+                for i in self.gate_list:
+                    print("prev", f"{self.prev}.tmx")
+                    print("dest", f"{i.properties['dest']}.tmx")
+                    if f"{i.properties['dest']}.tmx" == f"{self.prev}.tmx":
+                        print("---------------------------------------------------------------------")
+                        if self.player.FACING == 1:
+                            move_val = -1
+                        else:
+                            move_val = 1
+                        self.player.center_x = i.center_x + (move_val * 50)
+                        self.player.center_y = i.center_y
+                        print("x", self.player.center_x)
+                        print("y", self.player.center_y)
+                        print("ix", i.center_x)
+                        print("iy", i.center_y)
+            self.view_left = self.player.center_x - SCREEN_WIDTH//2
+            self.view_bottom = self.player.center_y - SCREEN_HEIGHT//2
 
-        self.grass_list.extend(self.detail_list)
+        self.all_list = None
+        self.all_list = arcade.SpriteList()
+        self.all_list.extend(self.wall_list)
+        self.all_list.extend(self.tiling_list)
+        self.all_list.extend(self.platform_list)
+        self.all_list.extend(self.door_list)
+
+        self.alt_all_list = None
+        self.alt_all_list = arcade.SpriteList()
+        self.alt_all_list.extend(self.wall_list)
+        self.alt_all_list.extend(self.tiling_list)
+        self.alt_all_list.extend(self.door_list)
+
+        self.player.physics_engines = [None, None]
+        self.physics_engine = arcade.PhysicsEnginePlatformer(
+            self.player,
+            self.all_list,
+            gravity_constant=GRAVITY)
+        self.physics_engine_plat = arcade.PhysicsEnginePlatformer(
+            self.player, self.alt_all_list, gravity_constant=GRAVITY)
+
+        self.player.physics_engines[0] = self.physics_engine
+        self.player.physics_engines[1] = self.physics_engine_plat
+
+    def level_setup(self):
+        for room in self.room_list:
+            room.wall_list = arcade.tilemap.process_layer(self.my_map, 'Platforms',
+                                                          0.3, use_spatial_hash=True)
+            layer_list = []
+            print(f'num layers{len(self.my_map.layers)}')
+            for i in range(len(self.my_map.layers)):
+                b = self.my_map.layers[i].name
+                print("g")
+                if b == "Gate":
+                    self.numb = i
+                    print(self.numb)
+                layer_list.append(b)
+            if 'Grass' in layer_list:
+                room.grass_list = arcade.tilemap.process_layer(self.my_map, 'Grass',
+                                                               0.3, use_spatial_hash=False)
+            if 'Details' in layer_list:
+                room.detail_list = arcade.tilemap.process_layer(self.my_map, 'Details',
+                                                                0.3, use_spatial_hash=False)
+                room.grass_list.extend(self.detail_list)
+            if 'Back' in layer_list:
+                room.tiling_list = arcade.tilemap.process_layer(self.my_map, 'Back',
+                                                                0.3, use_spatial_hash=False)
+            if 'Background' in layer_list:
+                room.back_list = arcade.tilemap.process_layer(self.my_map, 'Background',
+                                                              0.3, use_spatial_hash=False)
+            if 'Climbable' in layer_list:
+                room.platform_list = arcade.tilemap.process_layer(self.my_map, "Climbable",
+                                                                  0.3, use_spatial_hash=True)
+            if 'Interactibles' in layer_list:
+                room.interactables_list = arcade.process_layer(self.my_map, 'Interactibles',
+                                                               0.3, use_spatial_hash=False)
+            if 'Grapple' in layer_list:
+                room.grapple_list = arcade.process_layer(self.my_map, 'Grapple',
+                                                         0.3, use_spatial_hash=False)
+            if 'Actuators' in layer_list:
+                room.actuator_list = arcade.process_layer(self.my_map, 'Actuators',
+                                                          0.3, use_spatial_hash=False)
+                for b in self.actuator_list:
+                    b.identify = 1
+                    b.origin = b.texture
+            if 'Door' in layer_list:
+                room.door_list = arcade.process_layer(self.my_map, 'Door',
+                                                      0.3, use_spatial_hash=False)
+            if 'Gate' in layer_list:
+                room.gate_list = arcade.process_layer(self.my_map, 'Gate',
+                                                      0.3, use_spatial_hash=False)
+                print(self.my_map.layers[self.numb])
+                if self.prev is None:
+                    self.player.center_x = 600
+                    self.player.center_y = 600
+                else:
+                    for i in self.gate_list:
+                        print("prev", f"{self.prev}.tmx")
+                        print("dest", f"{i.properties['dest']}.tmx")
+                        if f"{i.properties['dest']}.tmx" == f"{self.prev}.tmx":
+                            print("---------------------------------------------------------------------")
+                            if self.player.FACING == 1:
+                                move_val = -1
+                            else:
+                                move_val = 1
+                            self.player.center_x = i.center_x + (move_val * 50)
+                            self.player.center_y = i.center_y
+                            print("x", self.player.center_x)
+                            print("y", self.player.center_y)
+                            print("ix", i.center_x)
+                            print("iy", i.center_y)
+                self.view_left = self.player.center_x - SCREEN_WIDTH//2
+                self.view_bottom = self.player.center_y - SCREEN_HEIGHT//2
+
+            self.all_list = None
+            self.all_list = arcade.SpriteList()
+            self.all_list.extend(self.wall_list)
+            self.all_list.extend(self.tiling_list)
+            self.all_list.extend(self.platform_list)
+            self.all_list.extend(self.door_list)
+
+            self.alt_all_list = None
+            self.alt_all_list = arcade.SpriteList()
+            self.alt_all_list.extend(self.wall_list)
+            self.alt_all_list.extend(self.tiling_list)
+            self.alt_all_list.extend(self.door_list)
+
+            self.player.physics_engines = [None, None]
+            self.physics_engine = arcade.PhysicsEnginePlatformer(
+                self.player,
+                self.all_list,
+                gravity_constant=GRAVITY)
+            self.physics_engine_plat = arcade.PhysicsEnginePlatformer(
+                self.player, self.alt_all_list, gravity_constant=GRAVITY)
+
+            self.player.physics_engines[0] = self.physics_engine
+            self.player.physics_engines[1] = self.physics_engine_plat
 
     def setup(self):
         self.wall_list = arcade.SpriteList()
@@ -154,13 +324,13 @@ class Game(arcade.View):
         self.text_list = arcade.SpriteList()
         self.interactables_list = arcade.SpriteList()
         self.grapple_list = arcade.SpriteList()
-
+        self.gate_list = arcade.SpriteList()
         """self.platform_list = arcade.SpriteList()"""
         """self.all_list_p = arcade.SpriteList()"""
 
-        self.player.center_y = 2000
-        self.player.center_x = 48*320*0.3/2
-        self.load_level(self.level)
+        self.player.center_y = 500
+        self.player.center_x = 500
+        self.load_level(arcade.read_tmx(f"Levels/Forest/Leaves/{data['maps'][self.level]['fileName']}"))
         self.rope = arcade.Sprite()
         self.rope.texture = arcade.load_texture("roap3.png")
         self.rope.center_x = -100
@@ -183,8 +353,7 @@ class Game(arcade.View):
         self.physics_engine_plat = arcade.PhysicsEnginePlatformer(
             self.player, self.alt_all_list, gravity_constant=GRAVITY)
 
-        self.player.physics_engines.append(self.physics_engine)
-        self.player.physics_engines.append(self.physics_engine_plat)
+
         self.player.set_hit_box(((-50.0, -130.0), (-30.0, -160.0), (30.0, -160.0), (50.0, -140.0), (50.0, 100.0),
                                  (20.0, 130.0), (-30.0, 130.0), (-50.0, 100.0)))
 
@@ -303,8 +472,8 @@ class Game(arcade.View):
             self.player.center_x += 1
 
         self.player.update()
-        self.player.bullet_list.update()
         self.player.effect_list.update()
+        self.player.bullet_list.update()
 
         p = False
         for i in self.grapple_list:
@@ -333,7 +502,7 @@ class Game(arcade.View):
             grapple_acc = self.grapple_angle - math.pi/2
             if grapple_acc < 0:
                 grapple_acc += math.pi*2
-            self.grapple_velocity += GRAVITY * 0.4 * math.sin(grapple_acc)
+            self.grapple_velocity += GRAVITY*1.4 * 0.4 * math.sin(grapple_acc)
             self.grapple_angle += self.grapple_velocity * delta_time * 0.2
             self.player.change_y = 0
             self.player.center_x = self.attach_point_x + math.cos(self.grapple_angle) * self.origin_dist
@@ -344,7 +513,6 @@ class Game(arcade.View):
         else:
             self.rope.center_x = -1000
             self.rope.center_y = -1000
-        changed = False
         if not self.interacting:
             character_offset_x = int(self.player.center_x) - int(self.view_left + (SCREEN_WIDTH // 2))
             character_offset_y = int(self.player.center_y) - int(self.view_bottom + (SCREEN_HEIGHT // 2))
@@ -355,23 +523,20 @@ class Game(arcade.View):
             character_offset_x = character_offset_x + int(self.tru_x*0.6)
             character_offset_y = character_offset_y + int(self.tru_y*0.4)
         if not self.interacting:
-            if self.view_left != (int(self.player.center_x - (SCREEN_WIDTH // 2))):
+            if self.view_left != (int(self.player.center_x - (SCREEN_WIDTH // 2))) or self.player.attacking:
                 self.view_left = self.view_left + ((character_offset_x // 10) + self.player.change_x * 1.2)
-                if self.view_left <= 0:
-                    self.view_left = 0
-                elif self.view_left >= len(self.my_map.layers[7].layer_data[0])*96 - SCREEN_WIDTH:
-                    self.view_left = len(self.my_map.layers[7].layer_data[0])*96 - SCREEN_WIDTH
-                changed = True
-            if self.view_bottom != (int(self.player.center_y - (SCREEN_HEIGHT // 2))):
+                if self.view_left <= 0 + SCREEN_WIDTH*SCREEN_ALT:
+                    self.view_left = 0 + SCREEN_WIDTH*SCREEN_ALT
+                elif self.view_left >= len(self.my_map.layers[0].layer_data[0])*48 - SCREEN_WIDTH*(1+SCREEN_ALT):
+                    self.view_left = len(self.my_map.layers[0].layer_data[0])*48 - SCREEN_WIDTH*(1+SCREEN_ALT)
+            if self.view_bottom != (int(self.player.center_y - (SCREEN_HEIGHT // 2))) or self.player.attacking:
                 self.view_bottom = self.view_bottom + (character_offset_y // 10) + 10
-                if self.view_bottom <= 0:
-                    self.view_bottom = 0
-                elif self.view_bottom >= len(self.my_map.layers[7].layer_data)*96 - SCREEN_HEIGHT:
-                    self.view_bottom = len(self.my_map.layers[7].layer_data)*96 - SCREEN_HEIGHT
-                changed = True
-            if changed and not self.dont:  # joke
-                arcade.set_viewport(self.view_left - SCREEN_WIDTH*.3, SCREEN_WIDTH*1.3 + self.view_left - 1,
-                                    self.view_bottom - SCREEN_HEIGHT*0.3, SCREEN_HEIGHT*1.3 + self.view_bottom - 1)
+                if self.view_bottom <= 0 + SCREEN_HEIGHT*SCREEN_ALT:
+                    self.view_bottom = 0 + SCREEN_HEIGHT*SCREEN_ALT
+                elif self.view_bottom >= len(self.my_map.layers[0].layer_data)*48 - SCREEN_HEIGHT*(1+SCREEN_ALT):
+                    self.view_bottom = len(self.my_map.layers[0].layer_data)*48 - SCREEN_HEIGHT*(1+SCREEN_ALT)
+            arcade.set_viewport(self.view_left - SCREEN_WIDTH*SCREEN_ALT, SCREEN_WIDTH*(1+SCREEN_ALT) + self.view_left - 1,
+                                self.view_bottom - SCREEN_HEIGHT*SCREEN_ALT, SCREEN_HEIGHT*(1+SCREEN_ALT) + self.view_bottom - 1)
                 #arcade.set_viewport(self.view_left, SCREEN_WIDTH + self.view_left - 1,
                 #                    self.view_bottom, SCREEN_HEIGHT + self.view_bottom - 1)
 
@@ -434,6 +599,17 @@ class Game(arcade.View):
             self.z = True
             for i in self.wall_list:
                 i.color = arcade.color.LIGHT_GRAY
+        if self.S:
+            self.player.change_y -= 6
+
+        if arcade.check_for_collision_with_list(self.player, self.gate_list):
+            for i in self.gate_list:
+                if arcade.check_for_collision(i, self.player):
+                    self.prev = self.current
+                    self.current = i.properties['dest']
+                    print("current", self.current)
+                    print('prev', self.prev)
+                    self.load_level(arcade.tilemap.read_tmx(f"Levels/Forest/Leaves/{i.properties['dest']}.tmx"))
 
     def on_draw(self):
         arcade.start_render()
@@ -461,7 +637,7 @@ class Game(arcade.View):
         self.grass_list.draw()
         self.grapple_list.draw()
         self.boss.on_draw()
-        self.shade.draw()
+        # self.shade.draw() # joke
 
         if self.interacting:
             self.conv.on_draw()
@@ -513,8 +689,15 @@ class Game(arcade.View):
             self.player.center_x = 3000
             self.player.center_y = 3000
         if key == arcade.key.M:
-            print(len(self.my_map.layers[7].layer_data)*96)
-            print(len(self.my_map.layers[7].layer_data[0])*96)
+            print(len(self.my_map.layers[2].layer_data))
+            print(len(self.my_map.layers[2].layer_data[0]))
+        if key == arcade.key.KEY_7:
+            if self.level < 2:
+                self.level += 1
+            else:
+                self.level = 0
+            self.prev = self.current
+            self.load_level(arcade.tilemap.read_tmx(f"Levels/Forest/Leaves/{data['maps'][self.level]['fileName']}"))
 
     def on_key_release(self, key: int, _modifiers: int):
         if not self.interacting:
@@ -530,6 +713,10 @@ class Game(arcade.View):
                 perp_angle = math.atan2(diff_x, diff_y)
                 self.player.change_x = (math.cos(perp_angle) * (c / 60)) / 4
                 self.player.change_y = (math.sin(-perp_angle) * (c / 60)) / 2
+            elif key == arcade.key.LSHIFT:
+                self.grappling = False
+                self.player.grapling = False
+                self.player.physics_engines[0].gravity_constant = GRAVITY
             elif key == arcade.key.S:
                 self.S = False
             elif key == arcade.key.E:
@@ -652,7 +839,8 @@ class Health(arcade.Sprite):
 
 def main():
     """ Main method """
-    window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, "GAME")
+    window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, "GAME", fullscreen=False)
+    window.center_window()
     game = Game()
     window.show_view(game)
     arcade.run()

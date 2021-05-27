@@ -352,48 +352,37 @@ class TestPlayer(arcade.Sprite):
                 self.E = True
 
     def on_key_press(self, key: int):
-        if key == arcade.key.A or key == arcade.key.LEFT:
+        if key == arcade.key.A:
             self.A = True
             if -2 < self.change_x and not self.attacking:
                 self.change_x -= 2
-        elif key == arcade.key.D or key == arcade.key.RIGHT:
+        elif key == arcade.key.D:
             self.D = True
             if self.change_x < 2 and not self.attacking:
                 self.change_x += 2
         elif key == arcade.key.Q:
             self.Q = True
 
-        g = False
-        if (key == arcade.key.W or key == arcade.key.SPACE or key == arcade.key.UP) and self.physics_engines[0].can_jump():
+        if (key == arcade.key.W or key == arcade.key.SPACE) and self.physics_engines[0].can_jump():
             self.jump()
-            g = True
+            self.W = True
         elif (key == arcade.key.W or key == arcade.key.SPACE or key == arcade.key.UP) and self.beaning:
-            if self.jumps >= 1:
-                self.jumps -= 1
-                self.change_y = 25
-                self.change_x = -15
-                g = True
+            self.change_y = 25
+            self.change_x = -15
         elif (key == arcade.key.W or key == arcade.key.SPACE or key == arcade.key.UP) and self.beanter:
-            if self.jumps >= 1:
-                self.jumps -= 1
-                self.change_y = 25
-                self.change_x = 15
-                g = True
+            self.change_y = 25
+            self.change_x = 15
         if key == arcade.key.J:
             a = self.skipp[0]
             a()
-        """if g:
-            for i in range(3):
-                puff = Smoke()
-                puff.center_x = self.center_x + random.randint(-40, 40)
-                puff.center_y = self.center_y - 30 - random.randint(-10, 40)
-                self.effect_list.append(puff)"""
 
     def on_key_release(self, key: int, _modifiers: int):
-        if key == arcade.key.A or key == arcade.key.LEFT:
+        if key == arcade.key.A:
             self.A = False
-        elif key == arcade.key.D or key == arcade.key.RIGHT:
+        elif key == arcade.key.D:
             self.D = False
+        if (key == arcade.key.W or key == arcade.key.SPACE) and self.change_y > 0:
+            self.change_y *= 0.5
 
     def on_mouse_press(self, button: int):
         if button == arcade.MOUSE_BUTTON_RIGHT:

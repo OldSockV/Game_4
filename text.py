@@ -10,9 +10,6 @@ for x in range(image.width):
     c = image.getpixel((x, 0))
     if c == (255, 0, 0, 255):
         character_count += 1
-        print(f'What position the character is in: {character_count}')
-        print(f'How wide the character is: {current_char_width*scaling}')
-        print(f'The position of the x is: {(x-current_char_width)*scaling}, width={current_char_width*scaling}')
         text = arcade.load_texture('Letters/fonts (Hugh funkBIG).png', x=(x-current_char_width)*scaling, y=0,
                                    width=current_char_width*scaling, height=image.height*scaling)
         letter.append(text)
