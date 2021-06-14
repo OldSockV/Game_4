@@ -90,6 +90,17 @@ class TestPlayer(arcade.Sprite):
             texture = arcade.load_texture("Spritesheets/Glide_spec.png",
                                           x=i*320, y=0, width=320, height=320, mirrored=True)
             self.slidingL.append(texture)
+        self.climbing = []
+        self.climbingR = []
+        for i in range(9):
+            texture = arcade.load_texture("Spritesheets/Climb-Sheet.png",
+                                          x=i * 800, y=0, width=800, height=960, mirrored=False)
+            self.climbingR.append(texture)
+        self.climbingL = []
+        for i in range(9):
+            texture = arcade.load_texture("Spritesheets/Climb-Sheet.png",
+                                          x=i * 800, y=0, width=800, height=960, mirrored=True)
+            self.climbingL.append(texture)
 
         self.jump_text = []
         texture1 = arcade.load_texture("Player/jump.png", mirrored=False)
@@ -105,6 +116,8 @@ class TestPlayer(arcade.Sprite):
         self.idle.append(self.idleL)
         self.sliding.append(self.slidingR)
         self.sliding.append(self.slidingL)
+        self.climbing.append(self.climbingR)
+        self.climbing.append(self.climbingL)
 
         self.jumps = 3
         self.x = 0
@@ -112,6 +125,7 @@ class TestPlayer(arcade.Sprite):
         self.x_t = 0
         self.y_t = 0
         self.FACING = 0
+        self.is_climbing = False
 
         joysticks = arcade.get_joysticks()
 
@@ -173,7 +187,7 @@ class TestPlayer(arcade.Sprite):
                 self.texture = self.walking[self.FACING][self.cur_texture // 4]
 
     def jump(self):
-        self.change_y = 25
+        self.change_y = 20
 
     def setup(self):
         self.gun.center_x = -100
@@ -301,12 +315,6 @@ class TestPlayer(arcade.Sprite):
             swipe.center_y = self.center_y + swipe.stored_y
             self.bullet_list.append(swipe)
             self.Q = False
-        for effect in self.effect_list:
-            effect.alpha -= 7
-            effect.update_animation()
-            if effect.kill:
-                effect.remove_from_sprite_lists()
-                del effect
         for bullet in self.bullet_list:
             bullet.update_animation()
             if ((bullet.center_x or bullet.center_y) < -100 or (bullet.center_x > 12000 or bullet.center_y > 4000)) \
@@ -382,7 +390,7 @@ class TestPlayer(arcade.Sprite):
         elif key == arcade.key.D:
             self.D = False
         if (key == arcade.key.W or key == arcade.key.SPACE) and self.change_y > 0:
-            self.change_y *= 0.5
+            self.change_y *= 0.4
 
     def on_mouse_press(self, button: int):
         if button == arcade.MOUSE_BUTTON_RIGHT:
@@ -455,6 +463,13 @@ class Smoke(arcade.Sprite):
         if self.cur_texture >= (4 * 6)-1:
             self.kill = True
         self.texture = self.smok[self.cur_texture // 6]
+
+    def update(self):
+        self.alpha -= 7
+        self.update_animation()
+        if self.kill:
+            self.remove_from_sprite_lists()
+            del self
 
 
 class Swipe(arcade.Sprite):
