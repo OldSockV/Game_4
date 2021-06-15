@@ -4,6 +4,7 @@ import enemy
 import math
 import text
 import conv
+import Turrets
 import Dialogues.Test_level
 import json
 with open("game.world") as forest_world:
@@ -104,7 +105,7 @@ class Game(arcade.View):
         self.shade = arcade.Sprite()
         self.shade.texture = arcade.load_texture("Shade.png")
         self.shade.scale = 20
-        self.shade.alpha = 30
+        self.shade.alpha = 0
         self.z = False
 
         self.gate_list = None
@@ -124,6 +125,10 @@ class Game(arcade.View):
         self.curs = Curs()
         self.perm_x = 0
         self.perm_y = 0
+        self.turret_list = None
+        self.turret_beams = None
+        self.respawning = False
+        self.end_times = 0
 
         self.setup()
 
@@ -139,6 +144,7 @@ class Game(arcade.View):
                 self.numb = i
             if b == 'Door':
                 self.numb_door = i
+                print("numb door", self.numb_door)
             if b == 'Actuators':
                 self.numb_target = i
             layer_list.append(b)
@@ -158,6 +164,10 @@ class Game(arcade.View):
         if 'Climbable' in layer_list:
             self.platform_list = arcade.tilemap.process_layer(self.my_map, "Climbable",
                                                               0.3, use_spatial_hash=True)
+        else:
+            for i in self.platform_list[::-1]:
+                i.remove_from_sprite_lists()
+                del i
         if 'Interactibles' in layer_list:
             self.interactables_list = arcade.process_layer(self.my_map, 'Interactibles',
                                                            0.3, use_spatial_hash=False)
@@ -170,6 +180,10 @@ class Game(arcade.View):
         if 'Respawn' in layer_list:
             self.res_list = arcade.process_layer(self.my_map, 'Respawn',
                                                  0.3, use_spatial_hash=False)
+        else:
+            for i in self.res_list[::-1]:
+                i.remove_from_sprite_lists()
+                del i
         if 'Actuators' in layer_list:
             self.actuator_list = arcade.process_layer(self.my_map, 'Actuators',
                                                       0.3, use_spatial_hash=False)
@@ -187,10 +201,17 @@ class Game(arcade.View):
             for i in self.door_list[::-1]:
                 i.remove_from_sprite_lists()
                 del i
+        if 'Turrets' in layer_list:
+            turret_list_cord = arcade.process_layer(self.my_map, 'Turrets',
+                                                    0.3, use_spatial_hash=False)
+            for i in turret_list_cord:
+                turret = Turrets.BigGun()
+                turret.center_x = i.center_x
+                turret.center_y = i.center_y
+                self.turret_list.append(turret)
         if 'Ledges' in layer_list:
             self.ledges = arcade.process_layer(self.my_map, 'Ledges',
                                                0.3, use_spatial_hash=False)
-            print("ledges = True")
         if 'Gate' in layer_list:
             self.gate_list = arcade.process_layer(self.my_map, 'Gate',
                                                   0.3, use_spatial_hash=False)
@@ -213,38 +234,40 @@ class Game(arcade.View):
             self.view_left = self.player.center_x - SCREEN_WIDTH//2
             self.view_bottom = self.player.center_y - SCREEN_HEIGHT//2
 
-        penis_list = []
-        unpeen_list = []
+        alttext_list = []
         for p in range(2):
             for i in range(6):
-                texture = arcade.load_texture("act-Sheet.png", x=i*160, y=480-p*160, height=160, width=160)
-                penis_list.append(texture)
+                texture = arcade.load_texture("act-Sheet.png", x=i*160, y=480-(p*160), height=160, width=160)
+                alttext_list.append(texture)
         for door in self.door_list:
             x = math.floor(door.center_x / 48)
             y = math.floor(door.center_y / 48)
-            door.associate = self.my_map.layers[self.numb_door].layer_data[(len(self.my_map.layers[2].layer_data[0])-1) - y][x] - 194
+            s = (len(self.my_map.layers[0].layer_data)-1)
+            door.associate = (self.my_map.layers[self.numb_door].layer_data[s - y][x]) - 254 # 194
+            print("door???", door.associate)
             if door.associate >= 6:
                 door.open = True
-                door.origin = penis_list[door.associate]
+                door.origin = alttext_list[door.associate]
                 door.off = door.texture
                 door.associate -= 6
             else:
                 door.origin = door.texture
-                door.off = penis_list[door.associate]
+                door.off = alttext_list[door.associate]
                 door.open = False
             # print("associate", door.associate)
-        penis_list1 = []
+        alttext_list1 = []
         for i in range(6):
             texture = arcade.load_texture("act-Sheet.png", x=i * 160, y=160, height=160, width=160)
-            penis_list1.append(texture)
+            alttext_list1.append(texture)
         for hit in self.actuator_list:
             x = math.floor(hit.center_x / 48)
             y = math.floor(hit.center_y / 48)
-            hit.associate = self.my_map.layers[self.numb_target].layer_data[(len(self.my_map.layers[2].layer_data[0])-1) - y][x] - 182
+            s = (len(self.my_map.layers[0].layer_data)-1)
+            hit.associate = self.my_map.layers[self.numb_target].layer_data[s - y][x] - 242
             print("tar_acc", hit.associate)
             hit.origin = hit.texture
             hit.open = True
-            hit.off = penis_list1[hit.associate]
+            hit.off = alttext_list1[hit.associate]
 
         self.all_list = None
         self.all_list = arcade.SpriteList()
@@ -271,9 +294,7 @@ class Game(arcade.View):
 
         self.player.physics_engines[0] = self.physics_engine
         self.player.physics_engines[1] = self.physics_engine_plat
-        print("roooms", self.room_list)
         for door in self.door_list:
-            print(door.open)
             if door.open:
                 self.all_list.remove(door)
                 self.alt_all_list.remove(door)
@@ -301,6 +322,8 @@ class Game(arcade.View):
         self.barb_list = arcade.SpriteList()
         self.res_list = arcade.SpriteList()
         self.ledges = arcade.SpriteList()
+        self.turret_list = arcade.SpriteList()
+        self.turret_beams = arcade.SpriteList()
         """self.platform_list = arcade.SpriteList()"""
         """self.all_list_p = arcade.SpriteList()"""
         # self.level_setup()
@@ -309,9 +332,9 @@ class Game(arcade.View):
         self.player.center_x = 500
         # self.load_level(arcade.read_tmx(f"Levels/Forest/Leaves/{data['maps'][self.level]['fileName']}"))
         """-------REAL---------"""
-        # self.load_level(arcade.read_tmx("untitled2.tmx"))
+        self.load_level(arcade.read_tmx("untitled2.tmx"))
         """---------TEST----------"""
-        self.load_level(arcade.read_tmx("2.tmx"))
+        # self.load_level(arcade.read_tmx("2.tmx"))
         self.rope = arcade.Sprite()
         self.rope.texture = arcade.load_texture("roap3.png")
         self.rope.center_x = -100
@@ -323,10 +346,11 @@ class Game(arcade.View):
 
         self.backdrop = arcade.Sprite()
         # self.backdrop.texture = arcade.load_texture("Backdrop/Spec_background - Copy.png")
-        self.backdrop.texture = arcade.load_texture("Backdrop/Forest_back2.png")
+        # self.backdrop.texture = arcade.load_texture("Backdrop/Forest_back2.png")
+        self.backdrop.texture = arcade.load_texture("Scene1.png")
         self.backdrop.center_x = 2000
         self.backdrop.center_y = 1000
-        self.backdrop.scale = 1.7*2
+        self.backdrop.scale = 0.3
         """for i in range(5):
             boi = enemy.TestEnemy(self.player)
             boi.center_x = random.randint(100, 6000)
@@ -352,290 +376,303 @@ class Game(arcade.View):
         self.boss.gun.center_y = self.boss.center_y
 
     def update(self, delta_time: float):
-        c = arcade.check_for_collision_with_list(self.player, self.platform_list)
-        if self.player.change_y > 0 or self.S or self.second_platform_check or self.player.S:
-            self.player.physics_engines[1].update()
-        else:
-            self.player.physics_engines[0].update()
-        if c:
-            self.second_platform_check = True
-        else:
-            self.second_platform_check = False
-        self.enemy_list.update()
-        # self.actuator_list.update()
-        for target in self.actuator_list:
-            collide = arcade.check_for_collision_with_list(target, self.player.bullet_list)
-            if collide:
-                for bullet in self.player.bullet_list:
-                    b = arcade.check_for_collision_with_list(bullet, self.actuator_list)
-                    if b and not bullet.swipe:
+        if not self.respawning:
+            if self.shade.alpha > 4:
+                self.end_times -= 0.3
+                self.shade.alpha = 255 * (((math.cos(self.end_times - math.pi)) / 2) + 0.5) // 1
+                print(self.shade.alpha)
+                if self.shade.alpha <= 4:
+                    self.shade.alpha = 0
+                    self.end_times = 0
+            c = arcade.check_for_collision_with_list(self.player, self.platform_list)
+            if self.player.change_y > 0 or self.S or self.second_platform_check or self.player.S:
+                self.player.physics_engines[1].update()
+            else:
+                self.player.physics_engines[0].update()
+            if c:
+                self.second_platform_check = True
+            else:
+                self.second_platform_check = False
+            self.enemy_list.update()
+            # self.actuator_list.update()
+            for target in self.actuator_list:
+                collide = arcade.check_for_collision_with_list(target, self.player.bullet_list)
+                if collide:
+                    for bullet in self.player.bullet_list:
+                        b = arcade.check_for_collision_with_list(bullet, self.actuator_list)
+                        if b and not bullet.swipe:
+                            bullet.remove_from_sprite_lists()
+                            del bullet
+                    for door in self.door_list:
+                        if door.associate == target.associate:
+                            if not door.open:
+                                door.texture = door.off
+                                self.all_list.remove(door)
+                                self.alt_all_list.remove(door)
+                                door.open = True
+                            else:
+                                door.texture = door.origin
+                                self.all_list.append(door)
+                                self.alt_all_list.append(door)
+                                door.open = False
+                    self.player.physics_engines = [None, None]
+                    self.physics_engine = arcade.PhysicsEnginePlatformer(
+                        self.player,
+                        self.all_list,
+                        gravity_constant=GRAVITY)
+                    self.physics_engine_plat = arcade.PhysicsEnginePlatformer(
+                        self.player,
+                        self.alt_all_list,
+                        gravity_constant=GRAVITY)
+                    self.player.physics_engines[0] = self.physics_engine
+                    self.player.physics_engines[1] = self.physics_engine_plat
+                    if target.identify == 1:
+                        target.texture = target.off
+                    else:
+                        target.texture = target.origin
+                    target.identify = target.identify * -1
+            for boi in self.enemy_list:
+                boi.update_animation()
+                boi.enemy_physics_engine.update()
+                a = arcade.check_for_collision_with_list(boi, self.player.bullet_list)
+                if a:
+                    for bullet in self.player.bullet_list:
+                        b = arcade.check_for_collision_with_list(bullet, self.enemy_list)
+                        if b and not bullet.swipe:
+                            bullet.remove_from_sprite_lists()
+                            del bullet
+                    boi.remove_from_sprite_lists()
+                    del boi
+            for bullet in self.player.bullet_list:
+                if not bullet.swipe:
+                    c = arcade.check_for_collision_with_list(bullet, self.alt_all_list)
+                    if c:
                         bullet.remove_from_sprite_lists()
                         del bullet
-                for door in self.door_list:
-                    if door.associate == target.associate:
-                        if not door.open:
-                            door.texture = door.off
-                            self.all_list.remove(door)
-                            self.alt_all_list.remove(door)
-                            door.open = True
-                        else:
-                            door.texture = door.origin
-                            self.all_list.append(door)
-                            self.alt_all_list.append(door)
-                            door.open = False
-                        print(door.open)
-                self.player.physics_engines = [None, None]
-                self.physics_engine = arcade.PhysicsEnginePlatformer(
-                    self.player,
-                    self.all_list,
-                    gravity_constant=GRAVITY)
-                self.physics_engine_plat = arcade.PhysicsEnginePlatformer(
-                    self.player,
-                    self.alt_all_list,
-                    gravity_constant=GRAVITY)
-                self.player.physics_engines[0] = self.physics_engine
-                self.player.physics_engines[1] = self.physics_engine_plat
-                if target.identify == 1:
-                    target.texture = target.off
-                else:
-                    target.texture = target.origin
-                target.identify = target.identify * -1
-        for boi in self.enemy_list:
-            boi.update_animation()
-            boi.enemy_physics_engine.update()
-            a = arcade.check_for_collision_with_list(boi, self.player.bullet_list)
-            if a:
-                for bullet in self.player.bullet_list:
-                    b = arcade.check_for_collision_with_list(bullet, self.enemy_list)
-                    if b and not bullet.swipe:
-                        bullet.remove_from_sprite_lists()
-                        del bullet
-                boi.remove_from_sprite_lists()
-                del boi
-        for bullet in self.player.bullet_list:
-            if not bullet.swipe:
-                c = arcade.check_for_collision_with_list(bullet, self.alt_all_list)
-                if c:
-                    bullet.remove_from_sprite_lists()
-                    del bullet
 
-        """ ----------- LEDGE-CLIMBING ----------- """
-        if not self.player.physics_engines[1].can_jump() and not self.player.grapling:
-            self.player.center_x += 1
-            if arcade.check_for_collision_with_list(self.player, self.ledges):
-                for i in self.ledges:
-                    if arcade.check_for_collision(i, self.player):
-                        self.player.alpha = 0
-                        self.player.is_climbing = True
-                        self.player.center_x = i.center_x
-                        self.player.center_y = i.center_y + (240*0.3)
-                        self.player.beanter = False
-                        self.player.beaning = False
-                        self.climb_guy.alpha = 255
-                        self.climb_guy.face = self.player.FACING
-                        self.climb_guy.center_y = self.player.center_y
-                        self.climb_guy.center_x = self.player.center_x
-            self.player.center_x -= 2
-            if arcade.check_for_collision_with_list(self.player, self.ledges):
-                for i in self.ledges:
-                    if arcade.check_for_collision(i, self.player):
-                        self.player.alpha = 0
-                        self.player.is_climbing = True
-                        self.player.center_x = i.center_x
-                        self.player.center_y = i.center_y + (240*0.3)
-                        self.player.beanter = False
-                        self.player.beaning = False
-                        self.climb_guy.alpha = 255
-                        self.climb_guy.face = self.player.FACING
-                        self.climb_guy.center_y = self.player.center_y
-                        self.climb_guy.center_x = self.player.center_x
-            self.player.center_x += 1
+            """ ----------- LEDGE-CLIMBING ----------- """
+            if not self.player.physics_engines[1].can_jump() and not self.player.grapling:
+                self.player.center_x += 1
+                if arcade.check_for_collision_with_list(self.player, self.ledges):
+                    for i in self.ledges:
+                        if arcade.check_for_collision(i, self.player):
+                            self.player.alpha = 0
+                            self.player.is_climbing = True
+                            self.player.center_x = i.center_x
+                            self.player.center_y = i.center_y + (240*0.3)
+                            self.player.beanter = False
+                            self.player.beaning = False
+                            self.climb_guy.alpha = 255
+                            self.climb_guy.face = self.player.FACING
+                            self.climb_guy.center_y = self.player.center_y
+                            self.climb_guy.center_x = self.player.center_x
+                self.player.center_x -= 2
+                if arcade.check_for_collision_with_list(self.player, self.ledges):
+                    for i in self.ledges:
+                        if arcade.check_for_collision(i, self.player):
+                            self.player.alpha = 0
+                            self.player.is_climbing = True
+                            self.player.center_x = i.center_x
+                            self.player.center_y = i.center_y + (240*0.3)
+                            self.player.beanter = False
+                            self.player.beaning = False
+                            self.climb_guy.alpha = 255
+                            self.climb_guy.face = self.player.FACING
+                            self.climb_guy.center_y = self.player.center_y
+                            self.climb_guy.center_x = self.player.center_x
+                self.player.center_x += 1
 
-        ''' ----------- WALL-JUMPING ----------- '''
-        if not self.player.physics_engines[1].can_jump() and not self.player.grapling and self.ableto_wall_jump:
-            self.player.center_x += 1
-            if arcade.check_for_collision_with_list(self.player, self.alt_all_list):
-                self.player.beaning = True
-            else:
-                self.player.beaning = False
-            self.player.center_x -= 2
-            if arcade.check_for_collision_with_list(self.player, self.alt_all_list):
-                self.player.beanter = True
-            else:
-                self.player.beanter = False
-            self.player.center_x += 1
-            if self.player.beanter or self.player.beaning:
-                self.player.center_y -= 96
+            ''' ----------- WALL-JUMPING ----------- '''
+            if not self.player.physics_engines[1].can_jump() and not self.player.grapling and self.ableto_wall_jump:
+                self.player.center_x += 1
                 if arcade.check_for_collision_with_list(self.player, self.alt_all_list):
-                    self.player.beaning = False
-                    self.player.beanter = False
+                    self.player.beaning = True
                 else:
-                    self.player.change_y = -2
-                self.player.center_y += 96
+                    self.player.beaning = False
+                self.player.center_x -= 2
+                if arcade.check_for_collision_with_list(self.player, self.alt_all_list):
+                    self.player.beanter = True
+                else:
+                    self.player.beanter = False
+                self.player.center_x += 1
+                if self.player.beanter or self.player.beaning:
+                    self.player.center_y -= 96
+                    if arcade.check_for_collision_with_list(self.player, self.alt_all_list):
+                        self.player.beaning = False
+                        self.player.beanter = False
+                    else:
+                        self.player.change_y = -2
+                    self.player.center_y += 96
 
-        if self.player.is_climbing:
-            self.player.change_y = 0
-            self.player.change_x = 0
-            self.climb_guy.update_animation()
-            if self.climb_guy.die:
-                self.climb_guy.die = False
-                self.player.is_climbing = False
-                self.player.alpha = 255
-                self.climb_guy.alpha = 1
-                self.climb_guy.center_y = -100
-                self.climb_guy.center_x = -100
-        else:
-            self.player.update()
-        self.player.effect_list.update()
-        self.player.bullet_list.update()
+            if self.player.is_climbing:
+                self.player.change_y = 0
+                self.player.change_x = 0
+                self.climb_guy.update_animation()
+                if self.climb_guy.die:
+                    self.climb_guy.die = False
+                    self.player.is_climbing = False
+                    self.player.alpha = 255
+                    self.climb_guy.alpha = 1
+                    self.climb_guy.center_y = -100
+                    self.climb_guy.center_x = -100
+            else:
+                self.player.update()
+            self.player.effect_list.update()
+            self.player.bullet_list.update()
 
-        p = False
-        for i in self.grapple_list:
-            x_diff = self.player.center_x - i.center_x
-            y_diff = self.player.center_y - i.center_y
-            i.dist = math.sqrt((x_diff ** 2) + (y_diff ** 2))
-            if i.dist < 500:
-                self.attach_point_x = i.center_x
-                self.attach_point_y = i.center_y
-                if not self.grappling:
-                    self.origin_dist = math.sqrt((x_diff ** 2) + (y_diff ** 2))
-                p = True
-        if not p:
-            self.grappling = False
+            p = False
+            for i in self.grapple_list:
+                x_diff = self.player.center_x - i.center_x
+                y_diff = self.player.center_y - i.center_y
+                i.dist = math.sqrt((x_diff ** 2) + (y_diff ** 2))
+                if i.dist < 500:
+                    self.attach_point_x = i.center_x
+                    self.attach_point_y = i.center_y
+                    if not self.grappling:
+                        self.origin_dist = math.sqrt((x_diff ** 2) + (y_diff ** 2))
+                    p = True
+            if not p:
+                self.grappling = False
 
-        if self.grappling and p:
-            self.player.grapling = True
-            self.player.physics_engines[0].gravity_constant = 0
-            diff_x = self.player.center_x - self.attach_point_x
-            diff_y = self.player.center_y - self.attach_point_y
-            self.grapple_angle = math.atan2(diff_y, diff_x)
-            self.grapple_dist = math.sqrt((diff_x ** 2) + (diff_y ** 2))
+            if self.grappling and p:
+                self.player.grapling = True
+                self.player.physics_engines[0].gravity_constant = 0
+                diff_x = self.player.center_x - self.attach_point_x
+                diff_y = self.player.center_y - self.attach_point_y
+                self.grapple_angle = math.atan2(diff_y, diff_x)
+                self.grapple_dist = math.sqrt((diff_x ** 2) + (diff_y ** 2))
 
-            self.rope.center_x = (self.player.center_x + self.attach_point_x) / 2
-            self.rope.center_y = (self.player.center_y + self.attach_point_y) / 2
-            grapple_acc = self.grapple_angle - math.pi/2
-            if grapple_acc < 0:
-                grapple_acc += math.pi*2
-            self.grapple_velocity += GRAVITY*1.4 * 0.4 * math.sin(grapple_acc)
-            self.grapple_angle += self.grapple_velocity * delta_time * 0.2
-            self.player.change_y = 0
-            self.player.center_x = self.attach_point_x + math.cos(self.grapple_angle) * self.origin_dist
-            self.player.center_y = self.attach_point_y + math.sin(self.grapple_angle) * self.origin_dist
+                self.rope.center_x = (self.player.center_x + self.attach_point_x) / 2
+                self.rope.center_y = (self.player.center_y + self.attach_point_y) / 2
+                grapple_acc = self.grapple_angle - math.pi/2
+                if grapple_acc < 0:
+                    grapple_acc += math.pi*2
+                self.grapple_velocity += GRAVITY*1.4 * 0.4 * math.sin(grapple_acc)
+                self.grapple_angle += self.grapple_velocity * delta_time * 0.2
+                self.player.change_y = 0
+                self.player.center_x = self.attach_point_x + math.cos(self.grapple_angle) * self.origin_dist
+                self.player.center_y = self.attach_point_y + math.sin(self.grapple_angle) * self.origin_dist
 
-            self.rope.angle = math.degrees(self.grapple_angle) - 90
-            self.rope.height = self.origin_dist
-        else:
-            self.rope.center_x = -1000
-            self.rope.center_y = -1000
-        if not self.interacting:
-            character_offset_x = int(self.player.center_x) - int(self.view_left + (SCREEN_WIDTH // 2))
-            character_offset_y = int(self.player.center_y) - int(self.view_bottom + (SCREEN_HEIGHT // 2))
-        else:
-            character_offset_x = int(self.target_x) - int(self.view_left + (SCREEN_WIDTH // 2))
-            character_offset_y = int(self.target_y) - int(self.view_bottom + (SCREEN_HEIGHT // 2))
-        if self.player.attacking:
-            character_offset_x = character_offset_x + int(self.tru_x*0.6)
-            character_offset_y = character_offset_y + int(self.tru_y*0.4)
-        if not self.interacting:
-            if self.view_left != (int(self.player.center_x - (SCREEN_WIDTH // 2))) or self.player.attacking:
-                self.view_left = self.view_left + ((character_offset_x // 10) + self.player.change_x * 1.2)
-                if self.view_left <= 0 + SCREEN_WIDTH*SCREEN_ALT:
-                    self.view_left = 0 + SCREEN_WIDTH*SCREEN_ALT
-                elif self.view_left >= len(self.my_map.layers[0].layer_data[0])*48 - SCREEN_WIDTH*(1+SCREEN_ALT):
-                    self.view_left = len(self.my_map.layers[0].layer_data[0])*48 - SCREEN_WIDTH*(1+SCREEN_ALT)
-            if self.view_bottom != (int(self.player.center_y - (SCREEN_HEIGHT // 2))) or self.player.attacking:
-                self.view_bottom = self.view_bottom + (character_offset_y // 10) + 10
-                if self.view_bottom <= 0 + SCREEN_HEIGHT*SCREEN_ALT:
-                    self.view_bottom = 0 + SCREEN_HEIGHT*SCREEN_ALT
-                elif self.view_bottom >= len(self.my_map.layers[0].layer_data)*48 - SCREEN_HEIGHT*(1+SCREEN_ALT):
-                    self.view_bottom = len(self.my_map.layers[0].layer_data)*48 - SCREEN_HEIGHT*(1+SCREEN_ALT)
-            arcade.set_viewport((self.view_left - SCREEN_WIDTH*SCREEN_ALT)//1, (SCREEN_WIDTH*(1+SCREEN_ALT) + self.view_left - 1)//1,
-                                (self.view_bottom - SCREEN_HEIGHT*SCREEN_ALT)//1, (SCREEN_HEIGHT*(1+SCREEN_ALT) + self.view_bottom - 1)//1)
+                self.rope.angle = math.degrees(self.grapple_angle) - 90
+                self.rope.height = self.origin_dist
+            else:
+                self.rope.center_x = -1000
+                self.rope.center_y = -1000
+            if not self.interacting:
+                character_offset_x = int(self.player.center_x) - int(self.view_left + (SCREEN_WIDTH // 2))
+                character_offset_y = int(self.player.center_y) - int(self.view_bottom + (SCREEN_HEIGHT // 2))
+            else:
+                character_offset_x = int(self.target_x) - int(self.view_left + (SCREEN_WIDTH // 2))
+                character_offset_y = int(self.target_y) - int(self.view_bottom + (SCREEN_HEIGHT // 2))
+            if self.player.attacking:
+                character_offset_x = character_offset_x + int(self.tru_x*0.6)
+                character_offset_y = character_offset_y + int(self.tru_y*0.4)
+            if not self.interacting:
+                if self.view_left != (int(self.player.center_x - (SCREEN_WIDTH // 2))) or self.player.attacking:
+                    self.view_left = self.view_left + ((character_offset_x // 10) + self.player.change_x * 1.2)
+                    if self.view_left <= 0 + SCREEN_WIDTH*SCREEN_ALT:
+                        self.view_left = 0 + SCREEN_WIDTH*SCREEN_ALT
+                    elif self.view_left >= len(self.my_map.layers[0].layer_data[0])*48 - SCREEN_WIDTH*(1+SCREEN_ALT):
+                        self.view_left = len(self.my_map.layers[0].layer_data[0])*48 - SCREEN_WIDTH*(1+SCREEN_ALT)
+                if self.view_bottom != (int(self.player.center_y - (SCREEN_HEIGHT // 2))) or self.player.attacking:
+                    self.view_bottom = self.view_bottom + (character_offset_y // 10) + 10
+                    if self.view_bottom <= 0 + SCREEN_HEIGHT*SCREEN_ALT:
+                        self.view_bottom = 0 + SCREEN_HEIGHT*SCREEN_ALT
+                    elif self.view_bottom >= len(self.my_map.layers[0].layer_data)*48 - SCREEN_HEIGHT*(1+SCREEN_ALT):
+                        self.view_bottom = len(self.my_map.layers[0].layer_data)*48 - SCREEN_HEIGHT*(1+SCREEN_ALT)
+                arcade.set_viewport((self.view_left - SCREEN_WIDTH*SCREEN_ALT)//1, (SCREEN_WIDTH*(1+SCREEN_ALT) + self.view_left - 1)//1,
+                                    (self.view_bottom - SCREEN_HEIGHT*SCREEN_ALT)//1, (SCREEN_HEIGHT*(1+SCREEN_ALT) + self.view_bottom - 1)//1)
 
-        if self.timertoautofocus > 0:
-            self.timertoautofocus -= 1
-        if self.interacting:
-            self.view_left = self.view_left + (character_offset_x // 10)
-            self.view_bottom = self.view_bottom + (character_offset_y // 10)
-            if 5 >= abs(self.target_x) - abs(self.view_left + (SCREEN_WIDTH // 2)) or self.timertoautofocus <= 0:
-                self.view_left = self.target_x - SCREEN_WIDTH//2
-            if 5 >= abs(((SCREEN_HEIGHT // 2) + self.view_bottom) - self.target_y) or self.timertoautofocus <= 0:
-                self.view_bottom = self.target_y - SCREEN_HEIGHT//2
-            changed = True
-            if changed and not self.dont:  # joke
-                arcade.set_viewport(self.view_left, SCREEN_WIDTH + self.view_left - 1,
-                                    self.view_bottom, SCREEN_HEIGHT + self.view_bottom - 1)
-            if self.conv.return_available:
-                self.interacting = False
+            if self.timertoautofocus > 0:
+                self.timertoautofocus -= 1
+            if self.interacting:
+                self.view_left = self.view_left + (character_offset_x // 10)
+                self.view_bottom = self.view_bottom + (character_offset_y // 10)
+                if 5 >= abs(self.target_x) - abs(self.view_left + (SCREEN_WIDTH // 2)) or self.timertoautofocus <= 0:
+                    self.view_left = self.target_x - SCREEN_WIDTH//2
+                if 5 >= abs(((SCREEN_HEIGHT // 2) + self.view_bottom) - self.target_y) or self.timertoautofocus <= 0:
+                    self.view_bottom = self.target_y - SCREEN_HEIGHT//2
+                changed = True
+                if changed and not self.dont:  # joke
+                    arcade.set_viewport(self.view_left, SCREEN_WIDTH + self.view_left - 1,
+                                        self.view_bottom, SCREEN_HEIGHT + self.view_bottom - 1)
+                if self.conv.return_available:
+                    self.interacting = False
 
-        self.backdrop.center_x = 2000 + self.view_left // 2
-        self.backdrop.center_y = 1000 + self.view_bottom // 6
-        self.player.x_t = self.x_t + self.view_left
-        self.player.y_t = self.y_t + self.view_bottom
+            self.backdrop.center_x = 2000 + self.view_left // 2
+            self.backdrop.center_y = 1000 + self.view_bottom // 6
+            self.player.x_t = self.x_t + self.view_left
+            self.player.y_t = self.y_t + self.view_bottom
 
-        if self.player.joystick:
-            c = arcade.check_for_collision_with_list(self.player, self.interactables_list)
-            if not c:
-                self.player.E = False
-            if self.player.E:
-                self.e()
-            elif not self.player.E:
-                self.anti_e()
+            if self.player.joystick:
+                c = arcade.check_for_collision_with_list(self.player, self.interactables_list)
+                if not c:
+                    self.player.E = False
+                if self.player.E:
+                    self.e()
+                elif not self.player.E:
+                    self.anti_e()
 
-        if self.player.beaning or self.player.beanter:
-            self.player.change_y += 1
-        if not self.interacting:
-            self.bossing()
-        for beam in self.boss.attack_list:
-            if beam.can_it:
-                a = arcade.check_for_collision(beam, self.player)
-                if a and self.player.health > 0:
-                    beam.can_it = False
+            if self.player.beaning or self.player.beanter:
+                self.player.change_y += 1
+            if not self.interacting:
+                self.bossing()
+            for beam in self.boss.attack_list:
+                if beam.can_it:
+                    a = arcade.check_for_collision(beam, self.player)
+                    if a and self.player.health > 0:
+                        beam.can_it = False
+                        self.player.health -= 1
+                        self.health.texture = self.health.state[abs(self.player.health-4)]
+                        if self.player.health <= 0:
+                            exit()
+            wind = arcade.get_viewport()
+            self.health.center_x = wind[0] + 640*0.3 + 10
+            self.health.center_y = wind[3] - 160*0.3 - 10
+            self.perm_x = self.x_t + self.view_left
+            self.perm_y = self.y_t + self.view_bottom
+            self.curs.center_x = self.perm_x
+            self.curs.center_y = self.perm_y
+
+            self.shade.center_x = self.player.center_x
+            self.shade.center_y = self.player.center_y
+
+            if arcade.check_for_collision_with_list(self.player, self.res_list):
+                for res in self.res_list:
+                    if arcade.check_for_collision(res, self.player):
+                        self.res_act = res
+
+            b = False
+            for i in self.turret_list:
+                for beam in i.attack_list:
+                    if beam.can_it:
+                        b = arcade.check_for_collision(beam, self.player)
+
+            if arcade.check_for_collision_with_list(self.player, self.gate_list):
+                for i in self.gate_list:
+                    if arcade.check_for_collision(i, self.player):
+                        self.prev = self.current
+                        self.current = i.properties['dest']
+                        self.load_level(arcade.tilemap.read_tmx(f"{i.properties['dest']}.tmx"))
+            elif arcade.check_for_collision_with_list(self.player, self.barb_list) or b:
+                if self.player.health > 0:
                     self.player.health -= 1
-                    self.health.texture = self.health.state[abs(self.player.health-4)]
-                    if self.player.health <= 0:
-                        exit()
-        wind = arcade.get_viewport()
-        self.health.center_x = wind[0] + 640*0.3 + 10
-        self.health.center_y = wind[3] - 160*0.3 - 10
-        self.perm_x = self.x_t + self.view_left
-        self.perm_y = self.y_t + self.view_bottom
-        self.curs.center_x = self.perm_x
-        self.curs.center_y = self.perm_y
-        # self.health.center_x = self.view_left + 640*0.3 + 10
-        # self.health.center_y = self.view_bottom + SCREEN_HEIGHT - 160*0.3 - 10
-
-        self.shade.center_x = self.player.center_x
-        self.shade.center_y = self.player.center_y
-        if self.z:
-            self.shade.alpha += 0.2
-            if self.shade.alpha >= 60:
-                self.z = False
-        if self.shade.alpha <= 40:
-            self.z = True
-            for i in self.wall_list:
-                i.color = arcade.color.LIGHT_GRAY
-
-        if arcade.check_for_collision_with_list(self.player, self.res_list):
-            for res in self.res_list:
-                if arcade.check_for_collision(res, self.player):
-                    self.res_act = res
-
-        if arcade.check_for_collision_with_list(self.player, self.gate_list):
-            for i in self.gate_list:
-                if arcade.check_for_collision(i, self.player):
-                    self.prev = self.current
-                    self.current = i.properties['dest']
-                    self.load_level(arcade.tilemap.read_tmx(f"{i.properties['dest']}.tmx"))
-        elif arcade.check_for_collision_with_list(self.player, self.barb_list):
-            if self.player.health > 0:
-                self.player.health -= 1
-                self.health.texture = self.health.state[abs(self.player.health - 4)]
+                    self.health.texture = self.health.state[abs(self.player.health - 4)]
+                    self.respawning = True
+            self.turret_list.update()
+        else:
+            self.end_times += 0.1
+            self.shade.alpha = 255 * (((math.cos(self.end_times - math.pi)) / 2) + 0.5) // 1
+            print(self.shade.alpha)
+            if self.shade.alpha >= 250:
                 if self.player.health <= 0:
                     exit()
                 else:
+                    self.respawning = False
                     self.player.center_x = self.res_act.center_x
                     self.player.center_y = self.res_act.center_y
+                    self.view_left = self.player.center_x - SCREEN_WIDTH//2 - ((SCREEN_WIDTH*SCREEN_ALT)//2)
+                    self.view_bottom = self.player.center_y - SCREEN_HEIGHT//2 - ((SCREEN_HEIGHT*SCREEN_ALT)//2)
                     self.player.change_x = 0
                     self.player.change_y = 0
 
@@ -660,17 +697,22 @@ class Game(arcade.View):
         self.tiling_list.draw()
         self.wall_list.draw()
         self.barb_list.draw()
+        self.barb_list.update_animation()
         self.enemy_list.draw()
         self.player.effect_list.draw()
         self.actuator_list.draw()
         self.door_list.draw()
         self.player.bullet_list.draw()
         self.detail_list.draw()
+        # self.turret_list.update()
+        self.turret_list.draw()
+        for turret in self.turret_list:
+            turret.on_draw()
         self.grass_list.draw()
         self.grapple_list.draw()
         self.boss.on_draw()
         self.curs.draw()
-        # self.shade.draw() # joke
+        self.shade.draw() # joke
 
         if self.interacting:
             self.conv.on_draw()
@@ -722,8 +764,8 @@ class Game(arcade.View):
             if key == arcade.key.KEY_3:
                 self.player.health = 4
             if key == arcade.key.M:
-                print(len(self.my_map.layers[2].layer_data))
-                print(len(self.my_map.layers[2].layer_data[0]))
+                print(len(self.my_map.layers[0].layer_data))
+                print(len(self.my_map.layers[0].layer_data[0]))
             if key == arcade.key.KEY_5:
                 self.ableto_wall_jump = True
             if key == arcade.key.KEY_7:
@@ -731,12 +773,10 @@ class Game(arcade.View):
                     if not door.open:
                         self.all_list.remove(door)
                         self.alt_all_list.remove(door)
-                        # door.texture = door.off
                         door.open = True
                     else:
                         self.all_list.append(door)
                         self.alt_all_list.append(door)
-                        # door.texture = door.origin
                         door.open = False
 
     def on_key_release(self, key: int, _modifiers: int):
