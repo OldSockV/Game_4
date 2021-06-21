@@ -18,7 +18,6 @@ class TestPlayer(arcade.Sprite):
         self.cur_texture2 = 0
         self.health = 4
         self.gun = Gun()
-        self.pointer = Point()
         self.A = False
         self.D = False
         self.W = False
@@ -40,8 +39,6 @@ class TestPlayer(arcade.Sprite):
         self.cur_texture = 0
         self.bullet_list = None
         self.effect_list = None
-
-        self.skipp = [self.jump(), self.setup()]
 
         self.idle = []
         self.idleR = []
@@ -192,8 +189,6 @@ class TestPlayer(arcade.Sprite):
     def setup(self):
         self.gun.center_x = -100
         self.gun.center_y = -100
-        self.pointer.center_x = -900000
-        self.pointer.center_y = -900000
 
     def update(self):
         self.update_animation()
@@ -263,9 +258,6 @@ class TestPlayer(arcade.Sprite):
                 self.gun.texture = arcade.load_texture("Player/gun.png")
                 self.texture = arcade.load_texture("Player/guy_s.png")
             angle = math.atan2(diff_y, diff_x)
-            self.pointer.center_x = self.gun.center_x + math.cos(angle) * 30
-            self.pointer.center_y = self.gun.center_y + math.sin(angle) * 30
-            self.pointer.angle = self.gun.angle - 90
         if self.physics_engines[0].can_jump() and self.change_y == 0:
             self.beaning = False
             self.beanter = False
@@ -274,7 +266,6 @@ class TestPlayer(arcade.Sprite):
         diff_x = self.x_t - self.center_x
         diff_y = self.y_t - self.center_y
         self.gun.angle = math.degrees(math.atan2(diff_y, diff_x))
-        self.pointer.angle = self.gun.angle - 90
         if self.gun.angle < -90 or self.gun.angle > 90:
             if self.attacking:
                 self.gun.texture = arcade.load_texture("Player/gun.png", flipped_vertically=True)
@@ -404,8 +395,6 @@ class TestPlayer(arcade.Sprite):
             self.button = False
             self.gun.center_x = -100
             self.gun.center_y = -100
-            self.pointer.center_y = -900000
-            self.pointer.center_x = -900000
             self.texture = arcade.load_texture("Player/guy.png")
 
 
@@ -490,9 +479,3 @@ class Swipe(arcade.Sprite):
         if self.cur_texture >= (7 * 3)-1:
             self.kill = True
         self.texture = self.stat[self.cur_texture // 3]
-
-
-class Point(arcade.Sprite):
-    def __init__(self):
-        super().__init__()
-        self.texture = arcade.load_texture("Laser_pointer.png")
