@@ -462,6 +462,8 @@ class Game(arcade.View):
             if door.open:
                 self.all_list.remove(door)
                 self.alt_all_list.remove(door)
+        self.player.health = 4
+        self.health.texture = self.health.state[abs(self.player.health - 4)]
 
     def setup(self):
         self.wall_list = arcade.SpriteList()

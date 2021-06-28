@@ -19,6 +19,10 @@ Shooting:
  The bullet can go through deactivated door tiles and platforms,
  but will be destroyed if it collides with walls or closed door tiles.
 
+The player regenerates to full between rooms so if youre a bit worried
+about the level you can simply jump back one lever and re-enter, resetting
+your health but also the room.
+
 :Secret tips for gamers in need (cheats):
 if youre bad... git gud.
 
