@@ -13,6 +13,7 @@ class BigGun(arcade.Sprite):
         self.beam_list = arcade.SpriteList()
         self.attack_list = arcade.SpriteList()
         self.dist = 0
+        self.direct = 'Left'
 
     def on_draw(self):
         self.beam_list.draw()
@@ -25,9 +26,18 @@ class BigGun(arcade.Sprite):
             self.time += 1
             if len(self.beam_list) == 0 and len(self.attack_list) == 0:
                 beam = BigBeam()
-                beam.center_x = self.center_x-((self.dist*48)/2)
-                beam.center_y = self.center_y
-                beam.angle = self.angle - 180
+                if self.direct == 'Left':
+                    beam.center_x = self.center_x-((self.dist*48)/2)
+                    beam.center_y = self.center_y
+                    beam.angle = 0
+                elif self.direct == 'Down':
+                    beam.center_x = self.center_x
+                    beam.center_y = self.center_y - ((self.dist * 48) / 2)
+                    beam.angle = 90
+                elif self.direct == 'Right':
+                    beam.center_x = self.center_x + ((self.dist * 48) / 2)
+                    beam.center_y = self.center_y
+                    beam.angle = 0
                 beam.width = self.dist * 48
                 self.beam_list.append(beam)
         for beam in self.beam_list:

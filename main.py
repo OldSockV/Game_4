@@ -54,7 +54,9 @@ class Game(arcade.View):
         self.view_left = 0
         self.view_bottom = 0
         self.grass_list = None
+        self.dd = None
         self.back_list = None
+        self.back_list2 = None
         self.barrier_list = None
         self.tick = 0
 
@@ -67,6 +69,7 @@ class Game(arcade.View):
         self.all_list = None
 
         self.actuator_list = None
+        self.levers = None
         self.platform_list = None
         self.alt_all_list = None
         self.physics_engine_plat = None
@@ -106,6 +109,7 @@ class Game(arcade.View):
         self.shade.alpha = 0
         self.z = False
 
+        self.shade_list = None
         self.gate_list = None
         self.numb = None
         self.numb_door = None
@@ -130,6 +134,7 @@ class Game(arcade.View):
         self.numb_platforms = None
         test = []
         test2 = []
+        test3 = []
         for z in range(2):
             for y in range(2):
                 for x in range(6):
@@ -141,15 +146,28 @@ class Game(arcade.View):
             test[12]: 1, test[13]: 2, test[14]: 3, test[15]: 4, test[16]: 5, test[17]: 6,
             test[18]: 7, test[19]: 8, test[20]: 9, test[21]: 10, test[22]: 11, test[23]: 12,
         }
-        for y in range(2):
-            for x in range(6):
-                texture = arcade.load_texture("Turret_4.png", x=320+(x * 320), y=0 + (y * 320), height=320,
+        for y in range(6):
+            for x in range(7):
+                texture = arcade.load_texture("Turret_4.png", x=(x * 320), y=(y * 320), height=320,
                                               width=320)
                 test2.append(texture)
         self.example2 = {
-            test2[0]: 1, test2[1]: 2, test2[2]: 3, test2[3]: 4, test2[4]: 5, test2[5]: 6,
-            test2[6]: 7, test2[7]: 8, test2[8]: 9, test2[9]: 10, test2[10]: 11, test2[11]: 12
+            test2[0]: 99, test2[7]: 99, test2[14]: 99, test2[21]: 99, test2[28]: 99, test2[35]: 99,
+            test2[1]: 1, test2[2]: 2, test2[3]: 3, test2[4]: 4, test2[5]: 5, test2[6]: 6,
+            test2[8]: 7, test2[9]: 8, test2[10]: 9, test2[11]: 10, test2[12]: 11, test2[13]: 12,
+            test2[15]: 13, test2[16]: 14, test2[17]: 15, test2[18]: 16, test2[19]: 17, test2[20]: 18,
+            test2[22]: 19, test2[23]: 20, test2[24]: 21, test2[25]: 22, test2[26]: 23, test2[27]: 24,
+            test2[29]: 25, test2[30]: 26, test2[31]: 27, test2[32]: 28, test2[33]: 29, test2[34]: 30,
+            test2[36]: 31, test2[37]: 32, test2[38]: 33, test2[39]: 34, test2[40]: 35, test2[41]: 36
         }
+        for x in range(7):
+            texture = arcade.load_texture("Levers.png", x=(x*320), y=0, height=320, width=320)
+            test3.append(texture)
+        self.example3 = {
+            test3[0]: 99,
+            test3[1]: 1, test3[2]: 2, test3[3]: 3, test3[4]: 4, test3[5]: 5, test3[6]: 6
+        }
+
         '''test2[1]: 1, test2[2]: 2, test2[3]: 3, test2[4]: 4, test2[5]: 5, test2[6]: 6,
                     test2[8]: 7, test2[9]: 8, test2[10]: 9, test2[11]: 10, test2[12]: 11, test2[13]: 12,
                     test2[0]: 0, test2[14]: 0'''
@@ -173,19 +191,43 @@ class Game(arcade.View):
             if b == 'Platforms':
                 self.numb_platforms = i
             layer_list.append(b)
+        if 'Shadow' in layer_list:
+            self.shade_list = arcade.tilemap.process_layer(self.my_map, 'Shadow',
+                                                           0.3, use_spatial_hash=False)
+            self.grass_list.extend(self.shade_list)
+        else:
+            for i in self.shade_list[::-1]:
+                i.remove_from_sprite_lists()
+                del i
         if 'Grass' in layer_list:
             self.grass_list = arcade.tilemap.process_layer(self.my_map, 'Grass',
                                                            0.3, use_spatial_hash=False)
+        else:
+            for i in self.grass_list[::-1]:
+                i.remove_from_sprite_lists()
+                del i
         if 'Details' in layer_list:
             self.detail_list = arcade.tilemap.process_layer(self.my_map, 'Details',
                                                             0.3, use_spatial_hash=False)
             self.grass_list.extend(self.detail_list)
+        else:
+            for i in self.detail_list[::-1]:
+                i.remove_from_sprite_lists()
+                del i
         if 'Back' in layer_list:
             self.back_list = arcade.tilemap.process_layer(self.my_map, 'Back',
                                                             0.3, use_spatial_hash=False)
-        if 'Background' in layer_list:
-            self.back_list = arcade.tilemap.process_layer(self.my_map, 'Background',
-                                                          0.3, use_spatial_hash=False)
+        else:
+            for i in self.back_list[::-1]:
+                i.remove_from_sprite_lists()
+                del i
+        if 'Back2' in layer_list:
+            self.back_list2 = arcade.tilemap.process_layer(self.my_map, 'Back2',
+                                                           0.3, use_spatial_hash=False)
+        else:
+            for i in self.back_list2[::-1]:
+                i.remove_from_sprite_lists()
+                del i
         if 'Climbable' in layer_list:
             self.platform_list = arcade.tilemap.process_layer(self.my_map, "Climbable",
                                                               0.3, use_spatial_hash=True)
@@ -196,12 +238,24 @@ class Game(arcade.View):
         if 'Interactibles' in layer_list:
             self.interactables_list = arcade.process_layer(self.my_map, 'Interactibles',
                                                            0.3, use_spatial_hash=False)
+        else:
+            for i in self.interactables_list[::-1]:
+                i.remove_from_sprite_lists()
+                del i
         if 'Grapple' in layer_list:
             self.grapple_list = arcade.process_layer(self.my_map, 'Grapple',
                                                      0.3, use_spatial_hash=False)
+        else:
+            for i in self.grapple_list[::-1]:
+                i.remove_from_sprite_lists()
+                del i
         if "Barbs" in layer_list:
             self.barb_list = arcade.process_layer(self.my_map, 'Barbs',
                                                   0.3, use_spatial_hash=False)
+        else:
+            for i in self.barb_list[::-1]:
+                i.remove_from_sprite_lists()
+                del i
         if 'Respawn' in layer_list:
             self.res_list = arcade.process_layer(self.my_map, 'Respawn',
                                                  0.3, use_spatial_hash=False)
@@ -229,22 +283,79 @@ class Game(arcade.View):
         if 'Turrets' in layer_list:
             turret_list_cord = arcade.process_layer(self.my_map, 'Turrets',
                                                     0.3, use_spatial_hash=False)
+            turrettext_list = []
+            turrettext_list2 = []
+            turrettext_list3 = []
+            for y in range(2):
+                for i in range(6):
+                    texture = arcade.load_texture("Turret_4.png", x=320 + (i * 320), y=0 + (320*y), height=320, width=320)
+                    turrettext_list.append(texture)
+                    texture2 = arcade.load_texture("Turret_4.png", x=320 + (i * 320), y=640 + (320*y), height=320, width=320)
+                    turrettext_list2.append(texture2)
+                    texture3 = arcade.load_texture("Turret_4.png", x=320 + (i * 320), y=1280 + (320*y), height=320, width=320)
+                    turrettext_list3.append(texture3)
             for i in turret_list_cord:
                 text = i.texture
                 turret = Turrets.BigGun()
                 turret.texture = text
+                turret.direct = "Left"
                 turret.center_x = i.center_x
                 turret.center_y = i.center_y
                 self.turret_list.append(turret)
+                turret.associate = self.example2[turret.texture]
+
+            for turret in self.turret_list:
+                if turret.associate >= 25:
+                    turret.direct = "Right"
+                    turret.associate -= 24
+                elif turret.associate >= 12:
+                    turret.direct = "Down"
+                    turret.associate -= 12
+                else:
+                    turret.direct = 'Left'
+                if turret.associate >= 6:
+                    turret.associate -= 6
+                    turret.active = True
+                    turret.origin = turret.texture
+                    if turret.direct == "Left":
+                        turret.off = turrettext_list[turret.associate - 1]
+                    elif turret.direct == "Down":
+                        turret.off = turrettext_list2[turret.associate - 1]
+                    elif turret.direct == "Right":
+                        turret.off = turrettext_list3[turret.associate - 1]
+                else:
+                    turret.active = False
+                    if turret.direct == "Left":
+                        turret.origin = turrettext_list[turret.associate + 5]
+                    elif turret.direct == "Down":
+                        turret.origin = turrettext_list2[turret.associate + 5]
+                    elif turret.direct == "Right":
+                        turret.origin = turrettext_list3[turret.associate + 5]
+                    turret.off = turret.texture
+                print('associate', turret.associate)
+
                 x = math.floor(turret.center_x//48)
                 y = math.floor(turret.center_y//48)
                 s = len(self.my_map.layers[0].layer_data)
                 b = 0
-                while self.my_map.layers[self.numb_platforms].layer_data[s - y][x - b] == 0:
-                    b += 1
-                    if x - b <= -1:
-                        break
-                turret.dist = b
+                if turret.direct == 'Left':
+                    while self.my_map.layers[self.numb_platforms].layer_data[s - y][x - b] == 0:
+                        b += 1
+                        if x - b <= -1:
+                            break
+                    turret.dist = b
+                elif turret.direct == 'Down':
+                    while self.my_map.layers[self.numb_platforms].layer_data[(s - y) + b][x] == 0:
+                        b += 1
+                        if y - b <= -1:
+                            break
+                    turret.dist = b
+                elif turret.direct == 'Right':
+                    while self.my_map.layers[self.numb_platforms].layer_data[s - y][x + b] == 0:
+                        b += 1
+                        if x + b >= s:
+                            break
+                    turret.dist = b
         else:
             for tur in self.turret_list[::-1]:
                 tur.remove_from_sprite_lists()
@@ -256,6 +367,16 @@ class Game(arcade.View):
             for led in self.ledges[::-1]:
                 led.remove_from_sprite_lists()
                 del led
+        if 'Levers' in layer_list:
+            self.levers = arcade.process_layer(self.my_map, 'Levers',
+                                               0.3, use_spatial_hash=False)
+            for i in self.levers:
+                i.identify = 1
+                i.origin = i.texture
+        else:
+            for lev in self.levers[::-1]:
+                lev.remove_from_sprite_lists()
+                del lev
         if 'Gate' in layer_list:
             self.gate_list = arcade.process_layer(self.my_map, 'Gate',
                                                   0.3, use_spatial_hash=False)
@@ -302,21 +423,15 @@ class Game(arcade.View):
             hit.origin = hit.texture
             hit.open = True
             hit.off = alttext_list1[hit.associate - 1]
-        turrettext_list = []
-        for i in range(6):
-            texture = arcade.load_texture("Turret_4.png", x=320+(i*320), y=0, height=320, width=320)
-            turrettext_list.append(texture)
-        for turret in self.turret_list:
-            turret.associate = self.example2[turret.texture]
-            if turret.associate >= 6:
-                turret.associate -= 6
-                turret.active = True
-                turret.origin = turret.texture
-                turret.off = turrettext_list[turret.associate - 1]
-            else:
-                turret.active = False
-                turret.origin = turrettext_list[turret.associate - 1]
-                turret.off = turret.texture
+        alttext_list2 = []
+        for i in range(7):
+            texture = arcade.load_texture("Levers.png", x=i * 320, y=320, height=320, width=320)
+            alttext_list2.append(texture)
+        for lev in self.levers:
+            lev.associate = self.example3[lev.texture]
+            lev.origin = lev.texture
+            lev.on = False
+            lev.off = alttext_list2[lev.associate]
 
         self.all_list = None
         self.all_list = arcade.SpriteList()
@@ -351,6 +466,7 @@ class Game(arcade.View):
     def setup(self):
         self.wall_list = arcade.SpriteList()
         self.back_list = arcade.SpriteList()
+        self.back_list2 = arcade.SpriteList()
         self.tiling_list = arcade.SpriteList()
         self.effect_list = arcade.SpriteList()
         self.grass_list = arcade.SpriteList()
@@ -362,6 +478,7 @@ class Game(arcade.View):
         self.all_list = arcade.SpriteList()
         self.alt_all_list = arcade.SpriteList()
         self.actuator_list = arcade.SpriteList()
+        self.levers = arcade.SpriteList()
         self.door_list = arcade.SpriteList()
         self.platform_list = arcade.SpriteList()
         self.text_list = arcade.SpriteList()
@@ -373,6 +490,7 @@ class Game(arcade.View):
         self.ledges = arcade.SpriteList()
         self.turret_list = arcade.SpriteList()
         self.turret_beams = arcade.SpriteList()
+        self.shade_list = arcade.SpriteList()
         """self.platform_list = arcade.SpriteList()"""
         """self.all_list_p = arcade.SpriteList()"""
         # self.level_setup()
@@ -381,9 +499,9 @@ class Game(arcade.View):
         self.player.center_x = 500
         # self.load_level(arcade.read_tmx(f"Levels/Forest/Leaves/{data['maps'][self.level]['fileName']}"))
         """-------REAL---------"""
-        self.load_level(arcade.read_tmx("untitled2.tmx"))
+        # self.load_level(arcade.read_tmx("untitled2.tmx"))
         """---------TEST----------"""
-        # self.load_level(arcade.read_tmx("Worlds/Forest/S6_1.tmx"))
+        self.load_level(arcade.read_tmx("Worlds/Forest/S6_1.tmx"))
         # self.load_level(arcade.read_tmx("2.tmx"))
         self.rope = arcade.Sprite()
         self.rope.texture = arcade.load_texture("roap3.png")
@@ -443,50 +561,23 @@ class Game(arcade.View):
             else:
                 self.second_platform_check = False
             self.enemy_list.update()
+            for lev in self.levers:
+                if arcade.check_for_collision(lev, self.player):
+                    if self.E:
+                        self.hitted(target=lev)
+                        self.E = False
+
             for target in self.actuator_list:
                 collide = arcade.check_for_collision_with_list(target, self.player.bullet_list)
                 if collide:
+                    print("hitted", target.associate)
                     for bullet in self.player.bullet_list:
                         b = arcade.check_for_collision_with_list(bullet, self.actuator_list)
                         if b and not bullet.swipe:
                             bullet.remove_from_sprite_lists()
                             del bullet
-                    for door in self.door_list:
-                        if door.associate == target.associate:
-                            if not door.open:
-                                door.texture = door.off
-                                self.all_list.remove(door)
-                                self.alt_all_list.remove(door)
-                                door.open = True
-                            else:
-                                door.texture = door.origin
-                                self.all_list.append(door)
-                                self.alt_all_list.append(door)
-                                door.open = False
-                    for turret in self.turret_list:
-                        if turret.associate == target.associate:
-                            if turret.active:
-                                turret.texture = turret.off
-                                turret.active = False
-                            else:
-                                turret.texture = turret.origin
-                                turret.active = True
-                    self.player.physics_engines = [None, None]
-                    self.physics_engine = arcade.PhysicsEnginePlatformer(
-                        self.player,
-                        self.all_list,
-                        gravity_constant=GRAVITY)
-                    self.physics_engine_plat = arcade.PhysicsEnginePlatformer(
-                        self.player,
-                        self.alt_all_list,
-                        gravity_constant=GRAVITY)
-                    self.player.physics_engines[0] = self.physics_engine
-                    self.player.physics_engines[1] = self.physics_engine_plat
-                    if target.identify == 1:
-                        target.texture = target.off
-                    else:
-                        target.texture = target.origin
-                    target.identify = target.identify * -1
+                    self.hitted(target=target)
+
             for boi in self.enemy_list:
                 boi.update_animation()
                 boi.enemy_physics_engine.update()
@@ -712,7 +803,9 @@ class Game(arcade.View):
                     if arcade.check_for_collision(i, self.player):
                         self.prev = self.current
                         self.current = i.properties['dest']
-                        self.load_level(arcade.tilemap.read_tmx(f"{i.properties['dest']}.tmx"))
+                        self.load_level(arcade.tilemap.read_tmx(f"Worlds/Forest/{i.properties['dest']}.tmx"))
+                        self.view_left = self.player.center_x - SCREEN_WIDTH // 2
+                        self.view_bottom = self.player.center_y - SCREEN_HEIGHT // 2
             elif arcade.check_for_collision_with_list(self.player, self.barb_list) or b:
                 if self.player.health > 0:
                     self.player.health -= 1
@@ -738,6 +831,7 @@ class Game(arcade.View):
         arcade.start_render()
         self.backdrops_list.draw()
         self.backdrop.draw()
+        self.back_list2.draw()
         self.back_list.draw()
 
         self.res_list.draw()
@@ -746,6 +840,7 @@ class Game(arcade.View):
         self.interactables_list.draw()
 
         self.platform_list.draw()
+        self.levers.draw()
         self.effect_list.draw()
         self.rope.draw()
         self.player.draw()
@@ -760,12 +855,13 @@ class Game(arcade.View):
         self.actuator_list.draw()
         self.door_list.draw()
         self.player.bullet_list.draw()
-        self.detail_list.draw()
+        self.shade_list.draw()
         self.turret_list.draw()
         for turret in self.turret_list:
             turret.on_draw()
             turret.beam_list.update()
         self.grass_list.draw()
+        self.detail_list.draw()
         self.grapple_list.draw()
         self.boss.on_draw()
         self.curs.draw()
@@ -869,10 +965,8 @@ class Game(arcade.View):
         mouse_ty = y
         cx_cord = mouse_tx - screen_cx
         cy_cord = mouse_ty - screen_cy
-        print("old", (x+self.view_left))
         self.x = x + screen_left
         self.y = y + screen_bottom
-        print("new", self.x)
 
         self.player.workpleasex = self.view_left
         self.player.workpleasey = self.view_bottom
@@ -914,7 +1008,7 @@ class Game(arcade.View):
 
     def e(self):
         self.E = True
-        x = math.floor(self.player.center_x / 96)
+        """x = math.floor(self.player.center_x / 96)
         y = math.floor(self.player.center_y / 96)
         self.dialogue_select = 0
         self.target_x = x * 96 + 48
@@ -936,7 +1030,47 @@ class Game(arcade.View):
             self.conv.center_x = self.player.center_x
             self.conv.center_y = self.player.center_y - SCREEN_HEIGHT // 4
             self.conv.conv_point = 0
-            self.conv.setup()
+            self.conv.setup()"""
+
+    def hitted(self, target):
+        for door in self.door_list:
+            if door.associate == target.associate:
+                if not door.open:
+                    door.texture = door.off
+                    self.all_list.remove(door)
+                    self.alt_all_list.remove(door)
+                    door.open = True
+                else:
+                    door.texture = door.origin
+                    self.all_list.append(door)
+                    self.alt_all_list.append(door)
+                    door.open = False
+        for turret in self.turret_list:
+            print('tur', turret.associate)
+            if turret.associate == target.associate:
+                print("mega gay")
+                if turret.active:
+                    turret.texture = turret.off
+                    turret.active = False
+                else:
+                    turret.texture = turret.origin
+                    turret.active = True
+        self.player.physics_engines = [None, None]
+        self.physics_engine = arcade.PhysicsEnginePlatformer(
+            self.player,
+            self.all_list,
+            gravity_constant=GRAVITY)
+        self.physics_engine_plat = arcade.PhysicsEnginePlatformer(
+            self.player,
+            self.alt_all_list,
+            gravity_constant=GRAVITY)
+        self.player.physics_engines[0] = self.physics_engine
+        self.player.physics_engines[1] = self.physics_engine_plat
+        if target.identify == 1:
+            target.texture = target.off
+        else:
+            target.texture = target.origin
+        target.identify = target.identify * -1
 
     def bossing(self):
         # self.boss.update()

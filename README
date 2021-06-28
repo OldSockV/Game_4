@@ -1,0 +1,20 @@
+Hello! this is the first playable build of the game!
+
+Currently, the game is run by running the main.
+
+Controlls are as listed:
+ - movement:  A,D / (corresponding arrow keys)
+ - jump:  Space / W / Up
+ - Interact:  E
+ - Drop down platform: S / (down arrow)
+
+Shooting:
+ to shoot, hold right click to tart aiming,
+ once aiming, the screen will follow the mouse allowing
+ both further vision & shooting further targets.
+
+ While the player is aiming, press left click to
+ shoot towards the cursor.
+
+ The bullet can go through deactivated door tiles and platforms,
+ but will be destroyed if it collides with walls or closed door tiles.
