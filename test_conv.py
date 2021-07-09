@@ -44,7 +44,7 @@ class Game(arcade.View):
         
         self.active_input = None
         self.active_output = None
-        self.return_available = False #not apliccable to real code
+        self.return_available = False  # not apliccable to real code
         self.switch_chatt = False
 
         self.setup()
@@ -178,11 +178,14 @@ class Game(arcade.View):
 
     def act_2(self):
         self.interact = True
-        self.response = text.gen_letter_list(self.chatt.e['test1']['output1'][f'out{self.conv_point}'][self.select-1][0],
+        self.response = text.gen_letter_list(self.chatt.e['test1']['output1'][f'out{self.conv_point}']
+                                             [self.select-1][0],
                                              SCREEN_WIDTH // 18 * 5, SCREEN_HEIGHT // 26 * 10, 0.25, 36)
-        self.response1 = text.gen_letter_list(self.chatt.e['test1']['output1'][f'out{self.conv_point}'][self.select - 1][1],
+        self.response1 = text.gen_letter_list(self.chatt.e['test1']['output1'][f'out{self.conv_point}']
+                                              [self.select - 1][1],
                                               SCREEN_WIDTH // 18 * 5, SCREEN_HEIGHT // 26 * 7, 0.25, 36)
-        self.response2 = text.gen_letter_list(self.chatt.e['test1']['output1'][f'out{self.conv_point}'][self.select - 1][2],
+        self.response2 = text.gen_letter_list(self.chatt.e['test1']['output1'][f'out{self.conv_point}']
+                                              [self.select - 1][2],
                                               SCREEN_WIDTH // 18 * 5, SCREEN_HEIGHT // 26 * 4, 0.25, 36)
         if self.chatt.e['test1']['continuous'][f'inp{self.conv_point}'][self.select-1] is not None:
             self.conv_point = self.chatt.e['test1']['continuous'][f'inp{self.conv_point}'][self.select-1]
@@ -191,17 +194,21 @@ class Game(arcade.View):
 
     def in_case_two(self):
         self.interact = True
-        self.response = text.gen_letter_list(self.chatt.e['test1']['output1'][f'out{self.conv_point}'][self.select - 1][3],
+        self.response = text.gen_letter_list(self.chatt.e['test1']['output1'][f'out{self.conv_point}']
+                                             [self.select - 1][3],
                                              SCREEN_WIDTH // 18 * 5, SCREEN_HEIGHT // 26 * 10, 0.25, 36)
-        self.response1 = text.gen_letter_list(self.chatt.e['test1']['output1'][f'out{self.conv_point}'][self.select - 1][4],
+        self.response1 = text.gen_letter_list(self.chatt.e['test1']['output1'][f'out{self.conv_point}']
+                                              [self.select - 1][4],
                                               SCREEN_WIDTH // 18 * 5, SCREEN_HEIGHT // 26 * 7, 0.25, 36)
-        self.response2 = text.gen_letter_list(self.chatt.e['test1']['output1'][f'out{self.conv_point}'][self.select - 1][5],
+        self.response2 = text.gen_letter_list(self.chatt.e['test1']['output1'][f'out{self.conv_point}']
+                                              [self.select - 1][5],
                                               SCREEN_WIDTH // 18 * 5, SCREEN_HEIGHT // 26 * 4, 0.25, 36)
         self.twice = False
 
     def option_start(self):
         for i in range(len(self.chatt.e['test1']['dialog1'][f'inp{self.conv_point}'])):
-            hand = text.gen_letter_list(self.chatt.e['test1']['dialog1'][f'inp{self.conv_point}'][i], SCREEN_WIDTH/5*(i+1) + 4+100,
+            hand = text.gen_letter_list(self.chatt.e['test1']['dialog1'][f'inp{self.conv_point}'][i],
+                                        SCREEN_WIDTH/5*(i+1) + 4+100,
                                         SCREEN_HEIGHT // 20, 0.25, 36)
             for s in hand:
                 s.alpha = 100
@@ -216,7 +223,7 @@ class Game(arcade.View):
         self.response2 = None
         self.printed_text = None
 
-        self.return_available = True #not apliccable to real code
+        self.return_available = True  # not apliccable to real code
 
 
 class ChattOption:

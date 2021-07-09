@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.5" tiledversion="1.7.0" orientation="orthogonal" renderorder="right-down" width="48" height="32" tilewidth="160" tileheight="160" infinite="0" nextlayerid="42" nextobjectid="3">
- <tileset firstgid="1" source="../../Wireframe_purple16.tsx"/>
- <tileset firstgid="25" source="../../Forest.tsx"/>
- <tileset firstgid="313" source="../../act-Sheet.tsx"/>
- <tileset firstgid="349" source="../../Levers.tsx"/>
- <tileset firstgid="363" source="../../Specials.tsx"/>
+ <tileset firstgid="1" source="../../tsx&amp;world/Wireframe_purple16.tsx"/>
+ <tileset firstgid="25" source="../../tsx&amp;world/Forest.tsx"/>
+ <tileset firstgid="313" source="../../tsx&amp;world/act-Sheet.tsx"/>
+ <tileset firstgid="349" source="../../tsx&amp;world/Levers.tsx"/>
+ <tileset firstgid="363" source="../../tsx&amp;world/Specials.tsx"/>
  <layer id="1" name="wireframe" width="48" height="32">
   <data encoding="csv">
 22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,

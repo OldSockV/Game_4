@@ -1,6 +1,8 @@
+import math
 import arcade
 import text
 import random
+import conversations
 
 SCREEN_WIDTH = 1200
 SCREEN_HEIGHT = 600
@@ -9,6 +11,7 @@ SCREEN_HEIGHT = 600
 class Conv(arcade.Sprite):
     def __init__(self):
         super().__init__()
+        self.storage = conversations.enter_forest
         self.printed_text = None
         self.printed_text1 = None
         self.printed_text2 = None
@@ -56,6 +59,11 @@ class Conv(arcade.Sprite):
 
         self.setup()
 
+    def conversation(self, face, face2, tree_name, tree_phase):
+        self.conv = tree_name
+        self.active_icon.texture = self.chatt.face[self.storage[face]]
+        self.secondary_icon.texture = self.chatt.face[self.storage[face2]]
+
     def setup(self):
         self.reset()
         self.printed_text_list = arcade.SpriteList()
@@ -72,10 +80,10 @@ class Conv(arcade.Sprite):
         self.printed_text2 = None
         self.printed_text_list = None
         self.interact = False
-        self.printed_text = None
         self.select = 1
         self.output = None
         self.printed_text_list = None
+        print("reset")
         self.response = None
         self.response1 = None
         self.response2 = None
@@ -96,10 +104,21 @@ class Conv(arcade.Sprite):
             self.response.draw()
             self.response1.draw()
             self.response2.draw()
-        else:
-            if self.printed_text is not None:
-                self.printed_text.draw()
-            self.printed_text_list.draw()
+            for i in self.response:
+                i.center_y = i.origin[1] + math.sin(i.displacement/((200/i.displacement)+1)) * 10
+                i.displacement += 1
+            for i in self.response1:
+                i.center_y = i.origin[1] + math.sin(i.displacement/((200/i.displacement)+1)) * 10
+                i.displacement += 1
+            for i in self.response2:
+                i.center_y = i.origin[1] + math.sin(i.displacement/((200/i.displacement)+1)) * 10
+                i.displacement += 1
+        if self.printed_text is not None:
+            self.printed_text.draw()
+            for i in self.printed_text:
+                i.center_x += random.randint(-10, 10)
+                i.center_y += random.randint(-10, 10)
+        self.printed_text_list.draw()
 
     def on_key_press(self, key: int):
         if key == arcade.key.E:
@@ -107,11 +126,6 @@ class Conv(arcade.Sprite):
                 self.active_icon.texture = self.active_icon.var[1]
             else:
                 self.active_icon.texture = self.active_icon.var[0]
-        if key == arcade.key.R:
-            self.active_icon.texture = arcade.load_texture("Text/pentagons2.png", x=0, y=0,
-                                                           height=480, width=480)
-        elif key == arcade.key.T:
-            self.active_icon.texture = self.active_icon.var[random.randint(0, 34)]
         if not self.interact and not self.exit_time:
             if key == arcade.key.KEY_1:
                 self.select = 1
@@ -147,11 +161,12 @@ class Conv(arcade.Sprite):
             elif self.twice:
                 self.in_case_two()
             elif self.inactive_available:
+                print("inactive_available (enter)")
                 self.inactive_available = False
                 self.interact = False
-                self.response = None
+                """self.response = None
                 self.response1 = None
-                self.response2 = None
+                self.response2 = None"""
                 self.option_start()
             else:
                 self.act_2()
@@ -206,15 +221,37 @@ class Conv(arcade.Sprite):
 
     def act_2(self):
         self.interact = True
+        print("act_2")
         self.response = text.gen_letter_list(
             self.conv['output1'][f'out{self.conv_point}'][self.select - 1][0],
-            (self.center_x - self.width // 2 + (self.width // 18 * 5)), (self.center_y + ((self.height * 1.5) // 26 * 10) - self.height//3), 0.25)
+            (self.center_x - self.width // 2 + (self.width // 18 * 5)), (self.center_y +
+                                                                         ((self.height * 1.5) // 26 * 10) -
+                                                                         self.height//3), 0.25)
+        p = 0
+        for i in self.response:
+            p+=1
+            i.origin = [i.center_x, i.center_y]
+            i.displacement = p
         self.response1 = text.gen_letter_list(
             self.conv['output1'][f'out{self.conv_point}'][self.select - 1][1],
-            (self.center_x - self.width//2 + (self.width // 18 * 5)), (self.center_y + ((self.height * 1.5) // 26 * 7) - self.height//3), 0.25)
+            (self.center_x - self.width//2 + (self.width // 18 * 5)), (self.center_y +
+                                                                       ((self.height * 1.5) // 26 * 7) -
+                                                                       self.height//3), 0.25)
+        p = 0
+        for i in self.response1:
+            p+=1
+            i.origin = [i.center_x, i.center_y]
+            i.displacement = p
         self.response2 = text.gen_letter_list(
             self.conv['output1'][f'out{self.conv_point}'][self.select - 1][2],
-            (self.center_x - self.width//2 + (self.width // 18 * 5)), (self.center_y + ((self.height * 1.5) // 26 * 4) - self.height//3), 0.25)
+            (self.center_x - self.width//2 + (self.width // 18 * 5)), (self.center_y +
+                                                                       ((self.height * 1.5) // 26 * 4) -
+                                                                       self.height//3), 0.25)
+        p = 0
+        for i in self.response2:
+            p+=1
+            i.origin = [i.center_x, i.center_y]
+            i.displacement = p
         if self.conv['continuous'][f'inp{self.conv_point}'][self.select - 1] is not None:
             self.conv_point = self.conv['continuous'][f'inp{self.conv_point}'][self.select - 1]
             self.switch_chatt = True
@@ -222,15 +259,34 @@ class Conv(arcade.Sprite):
 
     def in_case_two(self):
         self.interact = True
+        print("in_case_two")
         self.response = text.gen_letter_list(
             self.conv['output1'][f'out{self.conv_point}'][self.select - 1][3],
-            (self.center_x-self.width//2 + (self.width // 18 * 5)), (self.center_y + ((self.height * 1.5) // 26 * 10) - self.height//3), 0.25)
+            (self.center_x-self.width//2 + (self.width // 18 * 5)), (self.center_y + ((self.height * 1.5) // 26 * 10) -
+                                                                     self.height//3), 0.25)
+        p = 0
+        for i in self.response:
+            p += 1
+            i.origin = [i.center_x, i.center_y]
+            i.displacement = p
         self.response1 = text.gen_letter_list(
             self.conv['output1'][f'out{self.conv_point}'][self.select - 1][4],
-            (self.center_x-self.width//2 + (self.width // 18 * 5)), (self.center_y + ((self.height * 1.5) // 26 * 7) - self.height//3), 0.25)
+            (self.center_x-self.width//2 + (self.width // 18 * 5)), (self.center_y + ((self.height * 1.5) // 26 * 7) -
+                                                                     self.height//3), 0.25)
+        p = 0
+        for i in self.response1:
+            p+=1
+            i.origin = [i.center_x, i.center_y]
+            i.displacement = p
         self.response2 = text.gen_letter_list(
             self.conv['output1'][f'out{self.conv_point}'][self.select - 1][5],
-            (self.center_x-self.width//2 + (self.width // 18 * 5)), (self.center_y + ((self.height * 1.5) // 26 * 4) - self.height//3), 0.25)
+            (self.center_x-self.width//2 + (self.width // 18 * 5)), (self.center_y + ((self.height * 1.5) // 26 * 4) -
+                                                                     self.height//3), 0.25)
+        p = 0
+        for i in self.response2:
+            p+=1
+            i.origin = [i.center_x, i.center_y]
+            i.displacement = p
         self.twice = False
 
     def option_start(self):
@@ -245,10 +301,11 @@ class Conv(arcade.Sprite):
     def exit_conv(self):
         self.inactive_available = False
         self.interact = False
-        self.response = None
+        """self.response = None
         self.response1 = None
-        self.response2 = None
+        self.response2 = None"""
         self.printed_text = None
+        print("exit_conv")
 
         self.return_available = True  # not apliccable to real code
 

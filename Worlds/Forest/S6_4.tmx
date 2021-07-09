@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.0" orientation="orthogonal" renderorder="right-down" width="48" height="48" tilewidth="160" tileheight="160" infinite="0" nextlayerid="525" nextobjectid="316">
- <tileset firstgid="1" source="../../Wireframe_purple16.tsx"/>
- <tileset firstgid="25" source="../../Forest.tsx"/>
- <tileset firstgid="313" source="../../Specials.tsx"/>
+<map version="1.5" tiledversion="1.7.0" orientation="orthogonal" renderorder="right-down" width="48" height="48" tilewidth="160" tileheight="160" infinite="0" nextlayerid="526" nextobjectid="322">
+ <tileset firstgid="1" source="../../tsx&amp;world/Wireframe_purple16.tsx"/>
+ <tileset firstgid="25" source="../../tsx&amp;world/Forest.tsx"/>
+ <tileset firstgid="313" source="../../tsx&amp;world/Specials.tsx"/>
  <layer id="1" name="wireframe" width="48" height="48">
   <data encoding="csv">
 2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
@@ -264,12 +264,12 @@
 </data>
  </layer>
  <objectgroup id="120" name="Ledges">
-  <object id="310" gid="315" x="4160" y="3200" width="160" height="160"/>
-  <object id="311" gid="315" x="2720" y="3840" width="160" height="160"/>
-  <object id="312" gid="315" x="5440" y="4960" width="160" height="160"/>
-  <object id="313" gid="315" x="3680" y="3200" width="160" height="160"/>
-  <object id="314" gid="315" x="5440" y="3200" width="160" height="160"/>
-  <object id="315" gid="315" x="4480" y="5760" width="160" height="160"/>
+  <object id="316" gid="315" x="4160" y="3200" width="160" height="160"/>
+  <object id="317" gid="315" x="2720" y="3840" width="160" height="160"/>
+  <object id="318" gid="315" x="5440" y="4960" width="160" height="160"/>
+  <object id="319" gid="315" x="3680" y="3200" width="160" height="160"/>
+  <object id="320" gid="315" x="5440" y="3200" width="160" height="160"/>
+  <object id="321" gid="315" x="4480" y="5760" width="160" height="160"/>
  </objectgroup>
  <objectgroup id="520" name="Gate">
   <object id="296" gid="313" x="960" y="6720" width="160" height="160">

@@ -3,14 +3,14 @@ from PIL import Image
 
 scaling = 10
 letter = []
-image = Image.open('Letters/fonts (Hugh funk).png')
+image = Image.open('Text/fonts (Hugh funk).png')
 current_char_width = 0
 character_count = 0
 for x in range(image.width):
     c = image.getpixel((x, 0))
     if c == (255, 0, 0, 255):
         character_count += 1
-        text = arcade.load_texture('Letters/fonts (Hugh funkBIG).png', x=(x-current_char_width)*scaling, y=0,
+        text = arcade.load_texture('Text/fonts (Hugh funkBIG).png', x=(x-current_char_width)*scaling, y=0,
                                    width=current_char_width*scaling, height=image.height*scaling)
         letter.append(text)
         current_char_width = 0

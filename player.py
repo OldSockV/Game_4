@@ -1,8 +1,6 @@
 import arcade
 import math
 import random
-from pymunk import Vec2d
-import os
 SCREEN_WIDTH = 1200
 SCREEN_HEIGHT = 700
 MOVEMENT_SPEED = 14
@@ -139,7 +137,6 @@ class TestPlayer(arcade.Sprite):
             self.joystick.push_handlers(self)
         else:
             # Handle if there are no joysticks.
-            print("There are no joysticks, plug in a joystick and run again.")
             self.joystick = None
             self.joystickduolingo = None
         self.interacting = False
@@ -257,7 +254,6 @@ class TestPlayer(arcade.Sprite):
             else:
                 self.gun.texture = arcade.load_texture("Player/gun.png")
                 self.texture = arcade.load_texture("Player/guy_s.png")
-            angle = math.atan2(diff_y, diff_x)
         if self.physics_engines[0].can_jump() and self.change_y == 0:
             self.beaning = False
             self.beanter = False
@@ -329,7 +325,6 @@ class TestPlayer(arcade.Sprite):
 
     def on_joybutton_press(self, _joystick, button):
         """ Handle button-down event for the joystick """
-        print("Button {} down".format(button))
         if not self.interacting:
             if button == 1:
                 if self.physics_engines[0].can_jump():

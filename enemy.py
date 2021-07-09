@@ -15,10 +15,12 @@ class TestEnemy(arcade.Sprite):
         self.flap2 = []
         s = random.randint(1, 6)
         for i in range(2):
-            texture = arcade.load_texture("Spritesheets/enemy1-Sheet.png", x=(640*s-320)+i*320, y=0, height=320, width=320)
+            texture = arcade.load_texture("Spritesheets/enemy1-Sheet.png", x=(640*s-320)+i*320, y=0, height=320,
+                                          width=320)
             self.flap.append(texture)
         for i in range(2):
-            texture = arcade.load_texture("Spritesheets/enemy1-Sheet.png", x=(640*s-320)+i*320, y=0, height=320, width=320, mirrored=True)
+            texture = arcade.load_texture("Spritesheets/enemy1-Sheet.png", x=(640*s-320)+i*320, y=0, height=320,
+                                          width=320, mirrored=True)
             self.flap2.append(texture)
         self.texture = self.flap[0]
         self.player = player

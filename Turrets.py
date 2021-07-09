@@ -1,6 +1,4 @@
 import arcade
-import math
-import random
 
 
 class BigGun(arcade.Sprite):
@@ -45,7 +43,7 @@ class BigGun(arcade.Sprite):
             beam.alpha -= 2
             if beam.height >= 96:
                 attk = BigBeam()
-                attk.texture = arcade.load_texture("Beam1.png")
+                attk.texture = arcade.load_texture("Player/Beam1.png")
                 attk.center_x = beam.center_x
                 attk.center_y = beam.center_y
                 attk.angle = beam.angle
@@ -70,6 +68,6 @@ class BigGun(arcade.Sprite):
 class BigBeam(arcade.Sprite):
     def __init__(self):
         super().__init__()
-        self.texture = arcade.load_texture("Beam.png")
+        self.texture = arcade.load_texture("Player/Beam.png")
         self.scale = 0.3
         self.height = 10
