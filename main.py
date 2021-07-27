@@ -1,3 +1,5 @@
+import random
+
 import arcade
 import player
 import enemy
@@ -137,7 +139,7 @@ class Game(arcade.View):
             for y in range(2):
                 for x in range(6):
                     texture = arcade.load_texture("Tilesets/act-Sheet.png", x=x * 160,
-                                                  y=0 + (y * 160) - (320 * z), height=160, width=160)
+                                                  y=0 + (y * 160) + (320 * z), height=160, width=160)
                     test.append(texture)
         self.example = {
             test[0]: 1, test[1]: 2, test[2]: 3, test[3]: 4, test[4]: 5, test[5]: 6,
@@ -170,6 +172,15 @@ class Game(arcade.View):
         '''test2[1]: 1, test2[2]: 2, test2[3]: 3, test2[4]: 4, test2[5]: 5, test2[6]: 6,
                     test2[8]: 7, test2[9]: 8, test2[10]: 9, test2[11]: 10, test2[12]: 11, test2[13]: 12,
                     test2[0]: 0, test2[14]: 0'''
+
+        self.meep = arcade.Sprite()
+        self.meep.textures = []
+        for i in test:
+            self.meep.textures.append(i)
+        self.meep.texture = self.meep.textures[0]
+        self.meep.center_x = 1000
+        self.meep.timer = 0
+        self.meep.center_y = 1000
 
         self.setup()
 
@@ -741,6 +752,7 @@ class Game(arcade.View):
                                         self.view_bottom, SCREEN_HEIGHT + self.view_bottom - 1)
                 if self.conv.return_available:
                     self.interacting = False
+                self.conv.update()
 
             self.backdrop.center_x = (2000 + self.view_left // 2) - ((self.backdrop.width//5)*2)
             self.backdrop.center_y = (1000 + self.view_bottom // 6) - (self.backdrop.height//4)
@@ -860,6 +872,13 @@ class Game(arcade.View):
         self.curs.draw()
         self.shade.draw()  # joke
 
+        self.meep.draw()
+        """self.meep.timer += 1
+        if self.meep.timer >= len(self.meep.textures):
+            self.meep.timer = 0
+        self.meep.color = [random.randint(100, 255), random.randint(100, 255), random.randint(100, 255)]
+        self.meep.texture = self.meep.textures[self.meep.timer]"""
+
         if self.interacting:
             self.conv.on_draw()
         self.health.draw()
@@ -873,6 +892,15 @@ class Game(arcade.View):
                 if s <= 45:
                     print('the number is', i)
                     break
+        if key == arcade.key.ESCAPE:
+            exit()
+        if key == arcade.key.NUM_SUBTRACT:
+            self.meep.timer -= 1
+            self.meep.texture = self.meep.textures[self.meep.timer]
+        elif key == arcade.key.NUM_ADD:
+            self.meep.timer += 1
+            self.meep.texture = self.meep.textures[self.meep.timer]
+        print("timer", self.meep.timer)
         if not self.player.is_climbing:
             if not self.interacting:
                 self.player.on_key_press(key)
@@ -1140,7 +1168,7 @@ class Curs(arcade.Sprite):
 
 def main():
     """ Main method """
-    window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, "GAME", fullscreen=False)
+    window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, "GAME", fullscreen=True)
     window.center_window()
     game = Game()
     window.show_view(game)

@@ -22,7 +22,7 @@ class Conv(arcade.Sprite):
         self.active_icon.var = []
         for p in range(5):
             for i in range(7):
-                texture = arcade.load_texture("Text/pentagons2.png", x=480 * i, y=480*p, height=480, width=480)
+                texture = arcade.load_texture("Text/pentagons2.png", x=480 * i, y=480 * p, height=480, width=480)
                 self.active_icon.var.append(texture)
                 self.secondary_icon.var.append(texture)
         self.active_icon.texture = self.active_icon.var[random.randint(0, 34)]
@@ -41,6 +41,7 @@ class Conv(arcade.Sprite):
         self.response1 = None
         self.response2 = None
         self.twice = False
+        self.twice_fin = False
         self.inactive_available = False
         self.exit_time = False
 
@@ -66,21 +67,48 @@ class Conv(arcade.Sprite):
             'wobble': self.wobble,
             'shake': self.shake
         }
+        self.list = [self.response, self.response1, self.response2]
 
+        self.conv = self.storage['1']
+        print("AAAA")
+        self.selected = self.types['123']
         self.setup()
 
     def wobble(self, letter):
-        letter.center_y = letter.origin[1] + math.sin(letter.displacement / ((200 / letter.displacement) + 1)) * 10
+        letter.center_y = letter.origin[1] + math.sin(letter.displacement / 10) * 10
         letter.displacement += 1
 
     def shake(self, letter):
-        letter.center_y = letter.origin[1] + random.randint(-10, 10)
-        letter.center_x = letter.origin[0] + random.randint(-10, 10)
+        letter.center_y = letter.origin[1] + random.randint(-2, 2)
+        letter.center_x = letter.origin[0] + random.randint(-2, 2)
+        # letter.center_y += random.randint(-5, 5)
+        # letter.center_x += random.randint(-5, 5)
 
-    def conversation(self, face, face2, tree_name, tree_phase, effect, effect_nums):
-        self.conv = self.storage(tree_name)
-        self.active_icon.texture = self.chatt.face[self.storage[face]]
-        self.secondary_icon.texture = self.chatt.face[self.storage[face2]]
+    def update(self):
+        """its the update."""
+        """for listed in self.list:
+            if listed is not None:
+                for letter in listed:
+                    self.wobble(letter)
+                    self.shake(letter)"""
+
+    def conversation(self, tree_name):  # , tree_phase, effect, effect_nums):
+        """Controlls conversation progression"""
+        print(tree_name)
+        if tree_name is not None:
+            self.conv = self.storage[tree_name]
+            print("SSSSSS")
+        self.active_icon.texture = self.chatt.face[self.conv['face1']]
+        self.secondary_icon.texture = self.chatt.face[self.conv['face2']]
+        self.remove_hand()
+        self.read_list()
+        self.act_2()
+        self.option_start()
+
+    def remove_hand(self):
+        for hand in self.printed_text_list[::-1]:
+            hand.remove_from_sprite_lists()
+            del hand
 
     def on_draw(self):
         self.draw()
@@ -92,108 +120,131 @@ class Conv(arcade.Sprite):
             self.response2.draw()
         if self.printed_text is not None:
             self.printed_text.draw()
-            for i in self.printed_text:
+            # Shaking going fucking balistic
+            """for i in self.printed_text:
                 i.center_x += random.randint(-10, 10)
-                i.center_y += random.randint(-10, 10)
+                i.center_y += random.randint(-10, 10)"""
         self.printed_text_list.draw()
 
     def setup(self):
+        self.reset()
         self.printed_text_list = arcade.SpriteList()
         self.active_icon.center_x = self.center_x - 480
         self.active_icon.center_y = self.center_y + 27
         self.secondary_icon.center_x = self.center_x + 480
         self.secondary_icon.center_y = self.center_y + 27
         self.printed_text_list = arcade.SpriteList()
+        self.option_start()
+        self.read_list()
+        self.conversation('1')
+        self.interact = False
 
     def act_1(self):
+        """Changing the selected chatt option"""
         self.printed_text = text.gen_letter_list(self.output, (((self.center_x - self.width // 2 +
                                                                  ((1200 // 5) * self.select)) + 4) - 2 + 100),
-                                                 (self.center_y + ((self.height * 1.5) // 20) - self.height//3)
+                                                 (self.center_y + ((self.height * 1.5) // 20) - self.height // 3)
                                                  - 5, 0.25)
 
     def read_list(self):
-        if self.conv['inp'] is not None:
-            b = len(self.conv['resp'][self.select - 1])
-            if b > 3:
-                self.twice = True
+        """Reads the response and goes through a second check if the response requires more than one block of text"""
+        if self.conv['resp'] is not None:
+            self.twice = True
         else:
             self.exit_time = True
 
     def act_2(self):
+        """The response printed"""
         self.interact = True
         print("act_2")
         self.response = text.gen_letter_list(
-            self.conv['resp'][self.select - 1][0],
+            self.conv['Start'][0],
             (self.center_x - self.width // 2 + (self.width // 18 * 5)), (self.center_y +
                                                                          ((self.height * 1.5) // 26 * 10) -
-                                                                         self.height//3), 0.25)
+                                                                         self.height // 3), 0.25)
         p = 0
         for i in self.response:
-            p+=1
+            p += 1
             i.origin = [i.center_x, i.center_y]
             i.displacement = p
+
         self.response1 = text.gen_letter_list(
-            self.conv['resp'][self.select - 1][1],
-            (self.center_x - self.width//2 + (self.width // 18 * 5)), (self.center_y +
-                                                                       ((self.height * 1.5) // 26 * 7) -
-                                                                       self.height//3), 0.25)
+            self.conv['Start'][1],
+            (self.center_x - self.width // 2 + (self.width // 18 * 5)), (self.center_y +
+                                                                         ((self.height * 1.5) // 26 * 7) -
+                                                                         self.height // 3), 0.25)
         p = 0
         for i in self.response1:
-            p+=1
+            p += 1
             i.origin = [i.center_x, i.center_y]
             i.displacement = p
+
         self.response2 = text.gen_letter_list(
-            self.conv['resp'][self.select - 1][2],
-            (self.center_x - self.width//2 + (self.width // 18 * 5)), (self.center_y +
-                                                                       ((self.height * 1.5) // 26 * 4) -
-                                                                       self.height//3), 0.25)
+            self.conv['Start'][2],
+            (self.center_x - self.width // 2 + (self.width // 18 * 5)), (self.center_y +
+                                                                         ((self.height * 1.5) // 26 * 4) -
+                                                                         self.height // 3), 0.25)
         p = 0
         for i in self.response2:
-            p+=1
+            p += 1
             i.origin = [i.center_x, i.center_y]
             i.displacement = p
+
         """if self.conv['next'][self.select - 1] is not None:
             self.conv_point = self.conv['next'][self.select - 1]
             self.switch_chatt = True"""
         self.inactive_available = True
 
     def in_case_two(self):
+        """if the response is two blocks long this prints before the normal response"""
+        self.remove_hand()
         self.interact = True
         print("in_case_two")
+        if "altface1" in self.conv:
+            if self.conv["altface1"][self.select - 1] is not None:
+                self.active_icon.texture = self.chatt.face[self.conv["altface1"][self.select - 1]]
+        if "altface2" in self.conv:
+            if self.conv["altface2"][self.select - 1] is not None:
+                self.secondary_icon.texture = self.chatt.face[self.conv["altface2"][self.select - 1]]
         self.response = text.gen_letter_list(
-            self.conv['resp'][self.select - 1][3],
-            (self.center_x-self.width//2 + (self.width // 18 * 5)), (self.center_y + ((self.height * 1.5) // 26 * 10) -
-                                                                     self.height//3), 0.25)
+            self.conv['resp'][self.select - 1][0],
+            (self.center_x - self.width // 2 + (self.width // 18 * 5)),
+            (self.center_y + ((self.height * 1.5) // 26 * 10) -
+             self.height // 3), 0.25)
         p = 0
         for i in self.response:
             p += 1
             i.origin = [i.center_x, i.center_y]
             i.displacement = p
         self.response1 = text.gen_letter_list(
-            self.conv['resp'][self.select - 1][4],
-            (self.center_x-self.width//2 + (self.width // 18 * 5)), (self.center_y + ((self.height * 1.5) // 26 * 7) -
-                                                                     self.height//3), 0.25)
+            self.conv['resp'][self.select - 1][1],
+            (self.center_x - self.width // 2 + (self.width // 18 * 5)),
+            (self.center_y + ((self.height * 1.5) // 26 * 7) -
+             self.height // 3), 0.25)
         p = 0
         for i in self.response1:
-            p+=1
+            p += 1
             i.origin = [i.center_x, i.center_y]
             i.displacement = p
         self.response2 = text.gen_letter_list(
-            self.conv['resp'][self.select - 1][5],
-            (self.center_x-self.width//2 + (self.width // 18 * 5)), (self.center_y + ((self.height * 1.5) // 26 * 4) -
-                                                                     self.height//3), 0.25)
+            self.conv['resp'][self.select - 1][2],
+            (self.center_x - self.width // 2 + (self.width // 18 * 5)),
+            (self.center_y + ((self.height * 1.5) // 26 * 4) -
+             self.height // 3), 0.25)
         p = 0
         for i in self.response2:
-            p+=1
+            p += 1
             i.origin = [i.center_x, i.center_y]
             i.displacement = p
         self.twice = False
+        self.twice_fin = True
 
     def option_start(self):
-        for i in range(len(self.conv['resp'])):
-            hand = text.gen_letter_list(self.conv['resp'][i],
-                                        (self.center_x-self.width//2 + (self.width / 5 * (i + 1)) + 4 + 100),
-                                        (self.center_y + (self.height // 20) - self.height//3), 0.25)
+        """Prints the options for the player"""
+        for i in range(len(self.conv['inp'])):
+            hand = text.gen_letter_list(self.conv['inp'][i],
+                                        (self.center_x - self.width // 2 + (self.width / 5 * (i + 1)) + 4 + 100),
+                                        (self.center_y + (self.height // 20) - self.height // 3), 0.25)
             for s in hand:
                 s.alpha = 100
             self.printed_text_list.extend(hand)
@@ -208,7 +259,7 @@ class Conv(arcade.Sprite):
                 self.select = 2
                 self.output = self.conv['inp'][1]
                 self.act_1()
-            elif key == arcade.key.KEY_3 and 3 <= len(self.conv['inp'][3]):
+            elif key == arcade.key.KEY_3 and 3 <= len(self.conv['inp']):
                 self.select = 3
                 self.output = self.conv['inp'][2]
                 self.act_1()
@@ -217,27 +268,13 @@ class Conv(arcade.Sprite):
                 self.output = self.conv['inp'][3]
                 self.act_1()
         if key == arcade.key.ENTER:
-            if not self.interact:
-                for hand in self.printed_text_list[::-1]:
-                    hand.remove_from_sprite_lists()
-                    del hand
-                self.read_list()
-            elif self.return_available:
-                self.return_available = False
-                self.exit_time = False
-                self.option_start()
-            elif self.twice:
+            if (self.conv['resp'][self.select - 1] is not None) and self.twice_fin == False:
                 self.in_case_two()
-            elif self.inactive_available:
-                print("inactive_available (enter)")
-                self.inactive_available = False
-                self.interact = False
-                """self.response = None
-                self.response1 = None
-                self.response2 = None"""
-                self.option_start()
             else:
-                self.act_2()
+                self.conversation(tree_name=self.conv["next"][self.select - 1])
+                self.twice_fin = False
+                self.interact = False
+            self.list = [self.response, self.response1, self.response2]
 
     def reset(self):
         self.printed_text = None
@@ -267,7 +304,7 @@ class ChattOption:
         self.faces = []
         for i in range(5):
             for b in range(7):
-                texture = arcade.load_texture("Text/pentagons2.png", x=480*b, y=480*i,
+                texture = arcade.load_texture("Text/pentagons2.png", x=480 * b, y=480 * i,
                                               height=480, width=480, mirrored=False)
                 self.faces.append(texture)
         self.face = {
@@ -278,6 +315,8 @@ class ChattOption:
             "p_wa": self.faces[4],
             "p_pi": self.faces[5],
             "p_ha": self.faces[6],
+
+            "": self.faces[12],
 
             "p_fl": self.faces[13],
             "p_d1": self.faces[8],
@@ -305,5 +344,3 @@ class ChattOption:
             "skel2": self.faces[33],
             "nek": self.faces[34]
         }
-
-
