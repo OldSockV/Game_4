@@ -11,7 +11,7 @@ SCREEN_HEIGHT = 600
 class Conv(arcade.Sprite):
     def __init__(self):
         super().__init__()
-        self.storage = conversations.enter_forest
+        self.storage = conversations.enter_level["S6_1"]
         self.printed_text = None
         self.printed_text1 = None
         self.printed_text2 = None
@@ -45,13 +45,11 @@ class Conv(arcade.Sprite):
         self.inactive_available = False
         self.exit_time = False
 
-        self.conv_point = 0
         self.conv = None
         self.chatt = ChattOption()
 
         self.active_input = None
         self.active_output = None
-        self.return_available = False  # not apliccable to real code
         self.switch_chatt = False
 
         self.types = {
@@ -70,9 +68,7 @@ class Conv(arcade.Sprite):
         self.list = [self.response, self.response1, self.response2]
 
         self.conv = self.storage['1']
-        print("AAAA")
         self.selected = self.types['123']
-        self.setup()
 
     def wobble(self, letter):
         letter.center_y = letter.origin[1] + math.sin(letter.displacement / 10) * 10
@@ -94,12 +90,17 @@ class Conv(arcade.Sprite):
 
     def conversation(self, tree_name):  # , tree_phase, effect, effect_nums):
         """Controlls conversation progression"""
-        print(tree_name)
-        if tree_name is not None:
-            self.conv = self.storage[tree_name]
-            print("SSSSSS")
+        if self.conv["next"][self.select - 1] is not None and self.switch_chatt:
+            self.conv = self.storage[tree_name]  # self.storage[self.conv["next"][self.select-1]]
+            self.switch_chatt = False
         self.active_icon.texture = self.chatt.face[self.conv['face1']]
         self.secondary_icon.texture = self.chatt.face[self.conv['face2']]
+        if self.conv['face1'] != '' and self.conv['face2'] != '':
+            self.texture = arcade.load_texture("Text/textbox_self_mult1.png")
+        elif self.conv['face2'] == '' and self.conv['face1'] != '':
+            self.texture = arcade.load_texture("Text/textbox_self_mult2.png")
+        else:
+            self.texture = arcade.load_texture("Text/textbox_self_mult3.png")
         self.remove_hand()
         self.read_list()
         self.act_2()
@@ -124,19 +125,27 @@ class Conv(arcade.Sprite):
             """for i in self.printed_text:
                 i.center_x += random.randint(-10, 10)
                 i.center_y += random.randint(-10, 10)"""
-        self.printed_text_list.draw()
+        if self.printed_text_list is not None:
+            self.printed_text_list.draw()
 
-    def setup(self):
+    def setup(self, tree, enter):
         self.reset()
+        if enter == 'enter':
+            self.storage = conversations.enter_level[tree]
+        elif enter == 'talk':
+            self.storage = conversations.talking[tree]
+        elif enter == 'invest':
+            self.storage = conversations.investigate[tree]
+        self.conv = self.storage["1"]
         self.printed_text_list = arcade.SpriteList()
         self.active_icon.center_x = self.center_x - 480
         self.active_icon.center_y = self.center_y + 27
         self.secondary_icon.center_x = self.center_x + 480
         self.secondary_icon.center_y = self.center_y + 27
         self.printed_text_list = arcade.SpriteList()
+        self.conversation('1')
         self.option_start()
         self.read_list()
-        self.conversation('1')
         self.interact = False
 
     def act_1(self):
@@ -150,15 +159,12 @@ class Conv(arcade.Sprite):
         """Reads the response and goes through a second check if the response requires more than one block of text"""
         if self.conv['resp'] is not None:
             self.twice = True
-        else:
-            self.exit_time = True
 
     def act_2(self):
         """The response printed"""
         self.interact = True
-        print("act_2")
         self.response = text.gen_letter_list(
-            self.conv['Start'][0],
+            self.conv['start'][0],
             (self.center_x - self.width // 2 + (self.width // 18 * 5)), (self.center_y +
                                                                          ((self.height * 1.5) // 26 * 10) -
                                                                          self.height // 3), 0.25)
@@ -169,7 +175,7 @@ class Conv(arcade.Sprite):
             i.displacement = p
 
         self.response1 = text.gen_letter_list(
-            self.conv['Start'][1],
+            self.conv['start'][1],
             (self.center_x - self.width // 2 + (self.width // 18 * 5)), (self.center_y +
                                                                          ((self.height * 1.5) // 26 * 7) -
                                                                          self.height // 3), 0.25)
@@ -180,7 +186,7 @@ class Conv(arcade.Sprite):
             i.displacement = p
 
         self.response2 = text.gen_letter_list(
-            self.conv['Start'][2],
+            self.conv['start'][2],
             (self.center_x - self.width // 2 + (self.width // 18 * 5)), (self.center_y +
                                                                          ((self.height * 1.5) // 26 * 4) -
                                                                          self.height // 3), 0.25)
@@ -190,22 +196,42 @@ class Conv(arcade.Sprite):
             i.origin = [i.center_x, i.center_y]
             i.displacement = p
 
-        """if self.conv['next'][self.select - 1] is not None:
-            self.conv_point = self.conv['next'][self.select - 1]
-            self.switch_chatt = True"""
         self.inactive_available = True
 
     def in_case_two(self):
         """if the response is two blocks long this prints before the normal response"""
         self.remove_hand()
         self.interact = True
-        print("in_case_two")
+        one = False
+        two = False
+        if self.conv['face1'] != '':
+            one = True
+        else:
+            one = False
+        if self.conv['face2'] != '':
+            two = True
+        else:
+            two = False
         if "altface1" in self.conv:
             if self.conv["altface1"][self.select - 1] is not None:
                 self.active_icon.texture = self.chatt.face[self.conv["altface1"][self.select - 1]]
+                if self.conv['altface1'] != '':
+                    one = True
+                else:
+                    one = False
         if "altface2" in self.conv:
             if self.conv["altface2"][self.select - 1] is not None:
                 self.secondary_icon.texture = self.chatt.face[self.conv["altface2"][self.select - 1]]
+                if self.conv['altface2'] != '':
+                    two = True
+                else:
+                    two = False
+        if one and two:
+            self.texture = arcade.load_texture("Text/textbox_self_mult1.png")
+        elif one and not two:
+            self.texture = arcade.load_texture("Text/textbox_self_mult2.png")
+        else:
+            self.texture = arcade.load_texture("Text/textbox_self_mult3.png")
         self.response = text.gen_letter_list(
             self.conv['resp'][self.select - 1][0],
             (self.center_x - self.width // 2 + (self.width // 18 * 5)),
@@ -250,12 +276,12 @@ class Conv(arcade.Sprite):
             self.printed_text_list.extend(hand)
 
     def on_key_press(self, key: int):
-        if not self.interact and not self.exit_time:
+        if not self.interact:
             if key == arcade.key.KEY_1:
                 self.select = 1
                 self.output = self.conv['inp'][0]
                 self.act_1()
-            elif key == arcade.key.KEY_2:
+            elif key == arcade.key.KEY_2 and 2 <= len(self.conv['inp']):
                 self.select = 2
                 self.output = self.conv['inp'][1]
                 self.act_1()
@@ -267,11 +293,14 @@ class Conv(arcade.Sprite):
                 self.select = 4
                 self.output = self.conv['inp'][3]
                 self.act_1()
-        if key == arcade.key.ENTER:
-            if (self.conv['resp'][self.select - 1] is not None) and self.twice_fin == False:
+        if key == arcade.key.ENTER or key == arcade.key.E:
+            if (self.conv['resp'][self.select - 1] is not None) and self.twice_fin is False:
                 self.in_case_two()
+            elif self.conv['next'][self.select - 1] == "leave":
+                self.exit_time = True
             else:
-                self.conversation(tree_name=self.conv["next"][self.select - 1])
+                self.switch_chatt = True
+                self.conversation(tree_name=self.conv['next'][self.select -1])
                 self.twice_fin = False
                 self.interact = False
             self.list = [self.response, self.response1, self.response2]
@@ -285,17 +314,13 @@ class Conv(arcade.Sprite):
         self.select = 1
         self.output = None
         self.printed_text_list = None
-        print("reset")
         self.response = None
         self.response1 = None
         self.response2 = None
         self.twice = False
         self.inactive_available = False
-        self.exit_time = False
-        self.conv_point = 0
         self.active_input = None
         self.active_output = None
-        self.return_available = False  # not apliccable to real code
         self.switch_chatt = False
 
 

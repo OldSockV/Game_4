@@ -144,13 +144,6 @@ class TestPlayer(arcade.Sprite):
         self.workpleasex = 0
         self.workpleasey = 0
 
-        self.player_type = 0
-        self.skipp = [self.jump]
-
-        # setup
-        self.attack = self.skipp[self.player_type]
-        self.attack()
-
         self.setup()
 
     def update_animation(self, delta_time: float = 1/60):
@@ -381,7 +374,7 @@ class TestPlayer(arcade.Sprite):
     def on_mouse_press(self, button: int):
         if button == arcade.MOUSE_BUTTON_RIGHT:
             self.attacking = True
-        elif button == arcade.MOUSE_BUTTON_LEFT and self.attacking and not self.gun.shot:
+        elif button == arcade.MOUSE_BUTTON_LEFT and not self.gun.shot and self.attacking:
             self.button = True
 
     def on_mouse_release(self, button: int):

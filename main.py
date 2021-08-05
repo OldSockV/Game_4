@@ -1,6 +1,8 @@
 import random
 
 import arcade
+
+import conversations
 import player
 import enemy
 import math
@@ -15,7 +17,6 @@ with open("tsx&world/game.world") as forest_world:
 import boss
 
 SIZE = 1
-# UPDATES_PER_FRAME = 4
 SCREEN_WIDTH = int(1200 / SIZE)
 SCREEN_HEIGHT = int(700 / SIZE)
 SCREEN_ALT = 0.3 * SIZE
@@ -61,6 +62,7 @@ class Game(arcade.View):
         self.back_list2 = None
         self.barrier_list = None
         self.tick = 0
+        self.numb_interact = None
 
         self.backdrop = None
         self.enemy_physics_engine = None
@@ -100,8 +102,6 @@ class Game(arcade.View):
         self.conversation = text.Conversation()
         self.dialogue_select = 0
 
-        # joke please remove
-        self.dont = False
         self.boss = boss.Boss()
         self.shade = arcade.Sprite()
         self.shade.texture = arcade.load_texture("Misc_level_stuff/Shade.png")
@@ -114,6 +114,7 @@ class Game(arcade.View):
         self.numb = None
         self.numb_door = None
         self.numb_target = None
+        self.numb_levers = None
         self.prev = None
         self.world_map = {}
         self.current = None
@@ -132,15 +133,17 @@ class Game(arcade.View):
         self.respawning = False
         self.end_times = 0
         self.numb_platforms = None
+
+        self.can_interact = Target()
+
         test = []
         test2 = []
         test3 = []
-        for z in range(2):
-            for y in range(2):
-                for x in range(6):
-                    texture = arcade.load_texture("Tilesets/act-Sheet.png", x=x * 160,
-                                                  y=0 + (y * 160) + (320 * z), height=160, width=160)
-                    test.append(texture)
+        for y in range(4):
+            for x in range(6):
+                texture = arcade.load_texture("Tilesets/act-Sheet.png", x=x * 160,
+                                              y=0 + (y * 160), height=160, width=160)
+                test.append(texture)
         self.example = {
             test[0]: 1, test[1]: 2, test[2]: 3, test[3]: 4, test[4]: 5, test[5]: 6,
             test[6]: 7, test[7]: 8, test[8]: 9, test[9]: 10, test[10]: 11, test[11]: 12,
@@ -169,18 +172,7 @@ class Game(arcade.View):
             test3[1]: 1, test3[2]: 2, test3[3]: 3, test3[4]: 4, test3[5]: 5, test3[6]: 6
         }
 
-        '''test2[1]: 1, test2[2]: 2, test2[3]: 3, test2[4]: 4, test2[5]: 5, test2[6]: 6,
-                    test2[8]: 7, test2[9]: 8, test2[10]: 9, test2[11]: 10, test2[12]: 11, test2[13]: 12,
-                    test2[0]: 0, test2[14]: 0'''
-
-        self.meep = arcade.Sprite()
-        self.meep.textures = []
-        for i in test:
-            self.meep.textures.append(i)
-        self.meep.texture = self.meep.textures[0]
-        self.meep.center_x = 1000
-        self.meep.timer = 0
-        self.meep.center_y = 1000
+        self.ventures = []
 
         self.setup()
 
@@ -199,6 +191,10 @@ class Game(arcade.View):
                 self.numb_target = i
             if b == 'Platforms':
                 self.numb_platforms = i
+            if b == 'Levers':
+                self.numb_levers = i
+            if b == 'Interactibles':
+                self.numb_interact = i
             layer_list.append(b)
         if 'Shadow' in layer_list:
             self.shade_list = arcade.tilemap.process_layer(self.my_map, 'Shadow',
@@ -384,6 +380,10 @@ class Game(arcade.View):
             for i in self.levers:
                 i.identify = 1
                 i.origin = i.texture
+                """x = math.floor((i.center_x-24) // 48)
+                y = math.floor(i.center_y // 48)
+                m_height = len(self.my_map.layers[0].layer_data)
+                i.texture.name = self.my_map.layers[self.numb_levers].layer_data[m_height - y][x]"""
         else:
             for lev in self.levers[::-1]:
                 lev.remove_from_sprite_lists()
@@ -392,7 +392,7 @@ class Game(arcade.View):
             self.gate_list = arcade.process_layer(self.my_map, 'Gate',
                                                   0.3, use_spatial_hash=False)
             if self.prev is None:
-                self.player.center_x = 600
+                self.player.center_x = 400
                 self.player.center_y = 600
             else:
                 for i in self.gate_list:
@@ -403,8 +403,6 @@ class Game(arcade.View):
                             move_val = 1
                         self.player.center_x = i.center_x + (move_val * 50)
                         self.player.center_y = i.center_y
-            self.view_left = self.player.center_x - SCREEN_WIDTH//2
-            self.view_bottom = self.player.center_y - SCREEN_HEIGHT//2
 
         alttext_list = []
         for p in range(2):
@@ -445,14 +443,12 @@ class Game(arcade.View):
         self.all_list = None
         self.all_list = arcade.SpriteList()
         self.all_list.extend(self.wall_list)
-        # self.all_list.extend(self.tiling_list)
         self.all_list.extend(self.platform_list)
         self.all_list.extend(self.door_list)
 
         self.alt_all_list = None
         self.alt_all_list = arcade.SpriteList()
         self.alt_all_list.extend(self.wall_list)
-        # self.alt_all_list.extend(self.tiling_list)
         self.alt_all_list.extend(self.door_list)
 
         self.player.physics_engines = [None, None]
@@ -473,6 +469,41 @@ class Game(arcade.View):
                 self.alt_all_list.remove(door)
         self.player.health = 4
         self.health.texture = self.health.state[abs(self.player.health - 4)]
+
+        if (self.current not in self.ventures and self.current in conversations.enter_level) or (self.current is None):
+            self.ventures.append(self.current)
+            self.stop_doing_shit()
+            self.interacting = True
+            self.target_x = self.player.center_x
+            self.target_y = self.player.center_y + SCREEN_HEIGHT // 12
+            self.conv.center_x = self.player.center_x
+            if self.player.center_x - SCREEN_WIDTH//2 <= 0:
+                self.conv.center_x = SCREEN_WIDTH//2
+            elif self.player.center_x + SCREEN_WIDTH//2 >= len(self.my_map.layers[0].layer_data[0]) * 48:
+                self.conv.center_x = len(self.my_map.layers[0].layer_data[0]) * 48 - SCREEN_WIDTH//2
+            self.conv.center_y = self.player.center_y - SCREEN_HEIGHT // 3
+            if self.player.center_y - SCREEN_HEIGHT//3 - 100 <= 0:
+                self.conv.center_y = SCREEN_HEIGHT//6
+            if self.current is not None:
+                if self.current in conversations.enter_level:
+                    self.conv.setup(tree=self.current, enter='enter')
+            else:
+                self.conv.setup(tree="S6_1", enter='enter')
+                self.ventures.append("S6_1")
+            self.view_left = self.player.center_x - SCREEN_WIDTH//2
+            self.view_bottom = self.player.center_y - SCREEN_HEIGHT//2
+            if self.view_left <= 0:
+                self.view_left = 0
+            elif self.view_left >= (len(self.my_map.layers[0].layer_data[0]) * 48) - SCREEN_WIDTH:
+                self.view_left = (len(self.my_map.layers[0].layer_data[0]) * 48) - SCREEN_WIDTH
+            if self.view_bottom <= 0:
+                self.view_bottom = 0
+            elif self.view_bottom >= len(self.my_map.layers[0].layer_data) * 48:
+                self.view_bottom = len(self.my_map.layers[0].layer_data) * 48
+            arcade.set_viewport(self.view_left // 1,
+                                (SCREEN_WIDTH + self.view_left - 1) // 1,
+                                self.view_bottom // 1,
+                                (SCREEN_HEIGHT + self.view_bottom - 1) // 1)
 
     def setup(self):
         self.wall_list = arcade.SpriteList()
@@ -503,16 +534,9 @@ class Game(arcade.View):
         self.shade_list = arcade.SpriteList()
         """self.platform_list = arcade.SpriteList()"""
         """self.all_list_p = arcade.SpriteList()"""
-        # self.level_setup()
 
-        self.player.center_y = 500
-        self.player.center_x = 500
-        # self.load_level(arcade.read_tmx(f"Levels/Forest/Leaves/{data['maps'][self.level]['fileName']}"))
-        """-------REAL---------"""
-        # self.load_level(arcade.read_tmx("untitled2.tmx"))
-        """---------TEST----------"""
-        self.load_level(arcade.read_tmx("Worlds/Forest/S6_1.tmx"))
-        # self.load_level(arcade.read_tmx("2.tmx"))
+        self.player.center_y = 1000
+        self.player.center_x = 1000
         self.rope = arcade.Sprite()
         self.rope.texture = arcade.load_texture("Player/roap3.png")
         self.rope.center_x = -100
@@ -537,14 +561,14 @@ class Game(arcade.View):
                 boi,
                 self.all_list)"""
 
-        self.conv.center_x = 1000
-        self.conv.center_y = 1000
-        self.conv.setup()
-
         self.boss.center_x = 48*320*0.3/2
         self.boss.center_y = 2500
         self.boss.gun.center_x = self.boss.center_x
         self.boss.gun.center_y = self.boss.center_y
+
+        # self.interacting = True
+        """---------Start Level----------"""
+        self.load_level(arcade.read_tmx("Worlds/Forest/S6_1.tmx"))
 
     def update(self, delta_time: float):
         if not self.respawning:
@@ -720,18 +744,18 @@ class Game(arcade.View):
                 character_offset_y = character_offset_y + int((self.y_t-(SCREEN_HEIGHT+(SCREEN_HEIGHT*SCREEN_ALT*2))//2)
                                                               * 0.4)
             if not self.interacting:
-                if self.view_left != (int(self.player.center_x - (SCREEN_WIDTH // 2))) or self.player.attacking:
-                    self.view_left = self.view_left + ((character_offset_x // 10) + self.player.change_x * 1.2)
-                    if self.view_left <= 0 + SCREEN_WIDTH*SCREEN_ALT:
-                        self.view_left = 0 + SCREEN_WIDTH*SCREEN_ALT
-                    elif self.view_left >= len(self.my_map.layers[0].layer_data[0])*48 - SCREEN_WIDTH*(1+SCREEN_ALT):
-                        self.view_left = len(self.my_map.layers[0].layer_data[0])*48 - SCREEN_WIDTH*(1+SCREEN_ALT)
-                if self.view_bottom != (int(self.player.center_y - (SCREEN_HEIGHT // 2))) or self.player.attacking:
-                    self.view_bottom = self.view_bottom + (character_offset_y // 10) + 10
-                    if self.view_bottom <= 0 + SCREEN_HEIGHT*SCREEN_ALT:
-                        self.view_bottom = 0 + SCREEN_HEIGHT*SCREEN_ALT
-                    elif self.view_bottom >= len(self.my_map.layers[0].layer_data)*48 - SCREEN_HEIGHT*(1+SCREEN_ALT):
-                        self.view_bottom = len(self.my_map.layers[0].layer_data)*48 - SCREEN_HEIGHT*(1+SCREEN_ALT)
+                # if self.view_left != (int(self.player.center_x - (SCREEN_WIDTH // 2))) or self.player.attacking:
+                self.view_left = self.view_left + ((character_offset_x // 10) + self.player.change_x * 1.2)
+                if self.view_left <= 0 + SCREEN_WIDTH*SCREEN_ALT:
+                    self.view_left = 0 + SCREEN_WIDTH*SCREEN_ALT
+                elif self.view_left >= len(self.my_map.layers[0].layer_data[0])*48 - SCREEN_WIDTH*(1+SCREEN_ALT):
+                    self.view_left = len(self.my_map.layers[0].layer_data[0])*48 - SCREEN_WIDTH*(1+SCREEN_ALT)
+                # if self.view_bottom != (int(self.player.center_y - (SCREEN_HEIGHT // 2))) or self.player.attacking:
+                self.view_bottom = self.view_bottom + (character_offset_y // 10) + 10
+                if self.view_bottom <= 0 + SCREEN_HEIGHT*SCREEN_ALT:
+                    self.view_bottom = 0 + SCREEN_HEIGHT*SCREEN_ALT
+                elif self.view_bottom >= len(self.my_map.layers[0].layer_data)*48 - SCREEN_HEIGHT*(1+SCREEN_ALT):
+                    self.view_bottom = len(self.my_map.layers[0].layer_data)*48 - SCREEN_HEIGHT*(1+SCREEN_ALT)
                 arcade.set_viewport((self.view_left - SCREEN_WIDTH*SCREEN_ALT)//1, (SCREEN_WIDTH*(1+SCREEN_ALT) +
                                                                                     self.view_left - 1)//1,
                                     (self.view_bottom - SCREEN_HEIGHT*SCREEN_ALT)//1, (SCREEN_HEIGHT*(1+SCREEN_ALT) +
@@ -746,12 +770,6 @@ class Game(arcade.View):
                     self.view_left = self.target_x - SCREEN_WIDTH//2
                 if 5 >= abs(((SCREEN_HEIGHT // 2) + self.view_bottom) - self.target_y) or self.timertoautofocus <= 0:
                     self.view_bottom = self.target_y - SCREEN_HEIGHT//2
-                changed = True
-                if changed and not self.dont:  # joke
-                    arcade.set_viewport(self.view_left, SCREEN_WIDTH + self.view_left - 1,
-                                        self.view_bottom, SCREEN_HEIGHT + self.view_bottom - 1)
-                if self.conv.return_available:
-                    self.interacting = False
                 self.conv.update()
 
             self.backdrop.center_x = (2000 + self.view_left // 2) - ((self.backdrop.width//5)*2)
@@ -796,6 +814,30 @@ class Game(arcade.View):
                 for res in self.res_list:
                     if arcade.check_for_collision(res, self.player):
                         self.res_act = res
+
+            if arcade.check_for_collision_with_list(self.player, self.interactables_list):
+                for inter in self.interactables_list:
+                    if arcade.check_for_collision(inter, self.player):
+                        self.can_interact.center_x = inter.center_x
+                        self.can_interact.center_y = inter.center_y
+            else:
+                self.can_interact.center_x = -100
+                self.can_interact.center_y = -100
+
+            for inter in self.interactables_list:
+                x_dist = abs(inter.center_x - self.player.center_x)
+                y_dist = abs(inter.center_y - self.player.center_y)
+                # angle = math.atan2(y_dist, x_dist)
+                dist = math.sqrt((x_dist ** 2) + (y_dist ** 2))
+                print("dist", dist)
+                if dist <= 280:
+                    self.can_interact.center_x = inter.center_x
+                    self.can_interact.center_y = inter.center_y
+                    if dist <= 36:
+                        self.can_interact.alpha = 254
+                    else:
+                        self.can_interact.alpha = 280 - dist
+                # 66 burrel road, 7ish
 
             b = False
             for i in self.turret_list:
@@ -869,38 +911,17 @@ class Game(arcade.View):
         self.detail_list.draw()
         self.grapple_list.draw()
         self.boss.on_draw()
+        self.can_interact.draw()
         self.curs.draw()
-        self.shade.draw()  # joke
-
-        self.meep.draw()
-        """self.meep.timer += 1
-        if self.meep.timer >= len(self.meep.textures):
-            self.meep.timer = 0
-        self.meep.color = [random.randint(100, 255), random.randint(100, 255), random.randint(100, 255)]
-        self.meep.texture = self.meep.textures[self.meep.timer]"""
+        self.shade.draw()
 
         if self.interacting:
             self.conv.on_draw()
         self.health.draw()
 
     def on_key_press(self, key: int, modifiers: int):
-        if key == arcade.key.P:
-            a = 1.2
-            b = 8050
-            for i in range(999999):
-                s = (a*i + b)/(i+1)
-                if s <= 45:
-                    print('the number is', i)
-                    break
         if key == arcade.key.ESCAPE:
             exit()
-        if key == arcade.key.NUM_SUBTRACT:
-            self.meep.timer -= 1
-            self.meep.texture = self.meep.textures[self.meep.timer]
-        elif key == arcade.key.NUM_ADD:
-            self.meep.timer += 1
-            self.meep.texture = self.meep.textures[self.meep.timer]
-        print("timer", self.meep.timer)
         if not self.player.is_climbing:
             if not self.interacting:
                 self.player.on_key_press(key)
@@ -914,49 +935,36 @@ class Game(arcade.View):
                     self.grapple_dist = math.sqrt((diff_x ** 2) + (diff_y ** 2))
                     self.grapple_velocity = (-math.sqrt(
                         (self.player.change_x ** 2) + (self.player.change_y ** 2)) / self.grapple_dist)
-                    # self.origin_dist = math.sqrt((diff_x ** 2) + (diff_y ** 2))
                     self.grappling = True
                 elif key == arcade.key.S:
                     self.S = True
                 elif key == arcade.key.E:
                     self.e()
-                elif key == arcade.key.K:
-                    self.stop_doing_shit()
-                    self.interacting = True
-                    self.target_x = self.player.center_x
-                    self.target_y = self.player.center_y + SCREEN_HEIGHT//12
-                    self.conv.center_x = self.player.center_x
-                    self.conv.center_y = self.player.center_y - SCREEN_HEIGHT//4
-                    self.conv.conv_point = 0
-                    self.conv.setup()
             else:
                 self.conv.on_key_press(key)
-                if key == arcade.key.E:
+                if self.conv.exit_time:
                     self.anti_e()
-            if key == arcade.key.P:  # joke
-                if not self.dont:
-                    arcade.set_viewport(self.view_left, SCREEN_WIDTH*2 + self.view_left - 1,
-                                        self.view_bottom, SCREEN_HEIGHT*2 + self.view_bottom - 1)
-                    self.dont = True
-                else:
-                    self.dont = False
-            if key == arcade.key.KEY_1:
-                self.player.center_x = 500
-                self.player.center_y = 500
-            if key == arcade.key.KEY_3:
-                self.player.health = 4
-            if key == arcade.key.KEY_5:
-                self.ableto_wall_jump = True
-            if key == arcade.key.KEY_7:
-                for door in self.door_list:
-                    if not door.open:
-                        self.all_list.remove(door)
-                        self.alt_all_list.remove(door)
-                        door.open = True
-                    else:
-                        self.all_list.append(door)
-                        self.alt_all_list.append(door)
-                        door.open = False
+                    self.conv.exit_time = False
+                if key == arcade.key.P:
+                    self.anti_e()
+            if not self.interacting:
+                if key == arcade.key.KEY_1:
+                    self.player.center_x = 500
+                    self.player.center_y = 500
+                if key == arcade.key.KEY_3:
+                    self.player.health = 4
+                if key == arcade.key.KEY_5:
+                    self.ableto_wall_jump = True
+                if key == arcade.key.KEY_7:
+                    for door in self.door_list:
+                        if not door.open:
+                            self.all_list.remove(door)
+                            self.alt_all_list.remove(door)
+                            door.open = True
+                        else:
+                            self.all_list.append(door)
+                            self.alt_all_list.append(door)
+                            door.open = False
 
     def on_key_release(self, key: int, _modifiers: int):
         if not self.interacting:
@@ -1000,8 +1008,7 @@ class Game(arcade.View):
         if not self.interacting:
             self.player.on_mouse_press(button)
 
-    def on_mouse_release(self, x: float, y: float, button: int,
-                         modifiers: int):
+    def on_mouse_release(self, x: float, y: float, button: int, modifiers: int):
         if not self.interacting:
             self.player.on_mouse_release(button)
 
@@ -1029,29 +1036,51 @@ class Game(arcade.View):
 
     def e(self):
         self.E = True
-        """x = math.floor(self.player.center_x / 96)
-        y = math.floor(self.player.center_y / 96)
-        self.dialogue_select = 0
-        self.target_x = x * 96 + 48
-        self.target_y = y * 96 + 48
-        c = arcade.check_for_collision(self.player, self.character)
-        if self.my_map.layers[7].layer_data[31-y][x] != 0 or c:
-            if c:
-                text_happening = 99
-            else:
-                text_happening = self.my_map.layers[7].layer_data[31 - y][x] - 162
-                self.conv.conv = self.dictionaries.interactibles[f"obj{text_happening}"]
-            self.output = text_happening
-            self.interacting = True
-            self.stop_doing_shit()
-            self.timertoautofocus = 40
+        if self.numb_interact is not None:
+            """x = math.floor(self.player.center_x / 96)
+            y = math.floor(self.player.center_y / 96)
+            self.dialogue_select = 0
+            self.target_x = x * 96 + 48
+            self.target_y = y * 96 + 48"""
+            # if self.my_map.layers[self.numb_interact].layer_data[31-y][x] != 0:
+            for i in self.interactables_list:
+                if arcade.check_for_collision(i, self.player):
+                    self.E = False
+                    text_tree = i.properties['tree']
+                    if i.properties['talk']:
+                        text_type = 'talk'
+                    else:
+                        text_type = 'invest'
+                    self.stop_doing_shit()
+                    self.interacting = True
+                    self.target_x = self.player.center_x
+                    self.target_y = self.player.center_y + SCREEN_HEIGHT // 12
+                    self.conv.center_x = self.player.center_x
+                    if self.player.center_x - SCREEN_WIDTH // 2 <= 0:
+                        self.conv.center_x = SCREEN_WIDTH // 2
+                    elif self.player.center_x + SCREEN_WIDTH // 2 >= len(self.my_map.layers[0].layer_data[0]) * 48:
+                        self.conv.center_x = len(self.my_map.layers[0].layer_data[0]) * 48 - SCREEN_WIDTH // 2
+                    self.conv.center_y = self.player.center_y - SCREEN_HEIGHT // 3
+                    if self.player.center_y - SCREEN_HEIGHT // 3 - 100 <= 0:
+                        self.conv.center_y = SCREEN_HEIGHT // 6
 
-            self.target_x = self.player.center_x
-            self.target_y = self.player.center_y + SCREEN_HEIGHT // 12
-            self.conv.center_x = self.player.center_x
-            self.conv.center_y = self.player.center_y - SCREEN_HEIGHT // 4
-            self.conv.conv_point = 0
-            self.conv.setup()"""
+                    self.conv.setup(tree=text_tree, enter=text_type)
+
+                    self.view_left = self.player.center_x - SCREEN_WIDTH // 2
+                    self.view_bottom = self.player.center_y - SCREEN_HEIGHT // 2
+                    if self.view_left <= 0:
+                        self.view_left = 0
+                    elif self.view_left >= (len(self.my_map.layers[0].layer_data[0]) * 48) - SCREEN_WIDTH:
+                        self.view_left = (len(self.my_map.layers[0].layer_data[0]) * 48) - SCREEN_WIDTH
+                    if self.view_bottom <= 0:
+                        self.view_bottom = 0
+                    elif self.view_bottom >= len(self.my_map.layers[0].layer_data) * 48:
+                        self.view_bottom = len(self.my_map.layers[0].layer_data) * 48
+                    arcade.set_viewport(self.view_left // 1,
+                                        (SCREEN_WIDTH + self.view_left - 1) // 1,
+                                        self.view_bottom // 1,
+                                        (SCREEN_HEIGHT + self.view_bottom - 1) // 1)
+                    self.timertoautofocus = 40
 
     def hitted(self, target):
         for door in self.door_list:
@@ -1092,7 +1121,7 @@ class Game(arcade.View):
         target.identify = target.identify * -1
 
     def bossing(self):
-        # self.boss.update()
+        # self.boss.update()  # this will activate the dormant boss
         diff_x = self.player.center_x - self.boss.gun.center_x
         diff_y = self.player.center_y - self.boss.gun.center_y
         angley = math.atan2(diff_y, diff_x)
@@ -1166,9 +1195,17 @@ class Curs(arcade.Sprite):
         self.scale = 0.5
 
 
+class Target(arcade.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.texture = arcade.load_texture("Text/can_interact.png")
+        self.scale = 0.5
+        self.angle = 45
+
+
 def main():
     """ Main method """
-    window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, "GAME", fullscreen=True)
+    window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, "GAME", fullscreen=False)
     window.center_window()
     game = Game()
     window.show_view(game)
