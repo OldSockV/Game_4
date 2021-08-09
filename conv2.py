@@ -101,6 +101,7 @@ class Conv(arcade.Sprite):
             self.texture = arcade.load_texture("Text/textbox_self_mult2.png")
         else:
             self.texture = arcade.load_texture("Text/textbox_self_mult3.png")
+        self.twice_fin = False
         self.select = 1
         self.output = self.conv['inp'][0]
         self.act_1()
@@ -305,8 +306,8 @@ class Conv(arcade.Sprite):
                 self.exit_time = True
             else:
                 self.switch_chatt = True
-                self.conversation(tree_name=self.conv['next'][self.select -1])
                 self.twice_fin = False
+                self.conversation(tree_name=self.conv['next'][self.select -1])
                 self.interact = False
             self.list = [self.response, self.response1, self.response2]
 

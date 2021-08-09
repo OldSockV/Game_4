@@ -45,13 +45,14 @@ class Boss(arcade.Sprite):
         self.gun.angle = 0
         if self.att_don > 100:
             self.att_don = 0
-            if not self.phase == 3:
-                self.phase += 1
-            elif self.round == 2 and self.phase == 2:
+            print("round", self.round, "| phase", self.phase)
+            if self.round == 1 and self.phase == 2:
                 self.win = True
                 print("game end")
                 self.phase = -1
                 self.round = -1
+            if not self.phase == 3:
+                self.phase += 1
             else:
                 self.phase = 1
                 self.round += 1

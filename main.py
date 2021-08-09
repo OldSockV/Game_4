@@ -500,7 +500,7 @@ class Game(arcade.View):
 
         if self.current == "S6_boss":
             self.inside_bossroom = True
-            self.boss.center_x = 39.5 * 48
+            self.boss.center_x = 40 * 48
             self.boss.center_y = 21 * 48
             self.boss.gun.center_x = self.boss.center_x
             self.boss.gun.center_y = self.boss.center_y
@@ -917,6 +917,8 @@ class Game(arcade.View):
             if arcade.check_for_collision_with_list(self.player, self.gate_list):
                 for i in self.gate_list:
                     if arcade.check_for_collision(i, self.player):
+                        if self.current == "S6_boss":
+                            self.reset_boss()
                         self.prev = self.current
                         self.current = i.properties['dest']
                         self.load_level(arcade.tilemap.read_tmx(f"Worlds/Forest/{i.properties['dest']}.tmx"))

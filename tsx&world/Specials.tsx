@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.5" tiledversion="1.7.0" name="Specials" tilewidth="1600" tileheight="1920" tilecount="35" columns="0">
+<tileset version="1.5" tiledversion="1.7.0" name="Specials" tilewidth="1600" tileheight="1920" tilecount="41" columns="0">
  <grid orientation="orthogonal" width="1" height="1"/>
  <tile id="0">
   <image width="160" height="160" source="../Misc_level_stuff/arrow2.png"/>
@@ -105,5 +105,23 @@
  </tile>
  <tile id="40">
   <image width="160" height="160" source="../Misc_level_stuff/platform_thick3.png"/>
+ </tile>
+ <tile id="43">
+  <image width="1280" height="1280" source="../Misc_level_stuff/bosspillar2.png"/>
+ </tile>
+ <tile id="44">
+  <image width="1280" height="1280" source="../Misc_level_stuff/bosspillar3.png"/>
+ </tile>
+ <tile id="45">
+  <image width="1280" height="1280" source="../Misc_level_stuff/bosspillar4.png"/>
+ </tile>
+ <tile id="46">
+  <image width="1280" height="1280" source="../Misc_level_stuff/bosspillar5.png"/>
+ </tile>
+ <tile id="47">
+  <image width="1600" height="800" source="../Misc_level_stuff/Tram2.png"/>
+ </tile>
+ <tile id="48">
+  <image width="1280" height="1920" source="../Misc_level_stuff/Statue2.png"/>
  </tile>
 </tileset>
