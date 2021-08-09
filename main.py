@@ -133,6 +133,13 @@ class Game(arcade.View):
         self.respawning = False
         self.end_times = 0
         self.numb_platforms = None
+        self.reset_point = 'S6_1'
+        self.saved_prev = None
+        self.saved_facing = 0
+
+        self.boss_battle = False
+        self.inside_bossroom = False
+        self.bossbattle_prelude = -1
 
         self.can_interact = Target()
 
@@ -180,7 +187,10 @@ class Game(arcade.View):
         self.my_map = level
         self.wall_list = arcade.tilemap.process_layer(self.my_map, 'Platforms',
                                                       0.3, use_spatial_hash=True)
+        print(self.current)
         layer_list = []
+        self.player.change_x = 0
+        self.player.change_y = 0
         for i in range(len(self.my_map.layers)):
             b = self.my_map.layers[i].name
             if b == "Gate":
@@ -402,7 +412,7 @@ class Game(arcade.View):
                         else:
                             move_val = 1
                         self.player.center_x = i.center_x + (move_val * 50)
-                        self.player.center_y = i.center_y
+                        self.player.center_y = i.center_y - 24
 
         alttext_list = []
         for p in range(2):
@@ -469,6 +479,33 @@ class Game(arcade.View):
                 self.alt_all_list.remove(door)
         self.player.health = 4
         self.health.texture = self.health.state[abs(self.player.health - 4)]
+
+        if self.current == "S6_win":
+            self.ableto_wall_jump = True
+            self.reset_point = 'S6_win'
+            self.saved_prev = self.prev
+            self.saved_facing = self.player.FACING
+        elif self.current == "S6_1":
+            self.reset_point = 'S6_1'
+            self.saved_prev = self.prev
+            self.saved_facing = self.player.FACING
+        elif self.current == "S6_5":
+            self.reset_point = 'S6_5'
+            self.saved_prev = self.prev
+            self.saved_facing = self.player.FACING
+        elif self.current == "S6_84":
+            self.reset_point = 'S6_84'
+            self.saved_prev = self.prev
+            self.saved_facing = self.player.FACING
+
+        if self.current == "S6_boss":
+            self.inside_bossroom = True
+            self.boss.center_x = 39.5 * 48
+            self.boss.center_y = 21 * 48
+            self.boss.gun.center_x = self.boss.center_x
+            self.boss.gun.center_y = self.boss.center_y
+            self.boss.skin.center_x = self.boss.center_x
+            self.boss.skin.center_y = self.boss.center_y
 
         if (self.current not in self.ventures and self.current in conversations.enter_level) or (self.current is None):
             self.ventures.append(self.current)
@@ -560,11 +597,6 @@ class Game(arcade.View):
             boi.enemy_physics_engine = arcade.PhysicsEngineSimple(
                 boi,
                 self.all_list)"""
-
-        self.boss.center_x = 48*320*0.3/2
-        self.boss.center_y = 2500
-        self.boss.gun.center_x = self.boss.center_x
-        self.boss.gun.center_y = self.boss.center_y
 
         # self.interacting = True
         """---------Start Level----------"""
@@ -694,6 +726,24 @@ class Game(arcade.View):
             self.player.effect_list.update()
             self.player.bullet_list.update()
 
+            if self.inside_bossroom and not self.boss_battle and self.bossbattle_prelude == -1:
+                if arcade.check_for_collision_with_list(self.player, self.res_list):
+                    self.bossbattle_prelude = 200
+                    for door in self.door_list:
+                        if door.associate == 2:
+                            door.texture = door.origin
+                            self.all_list.append(door)
+                            self.alt_all_list.append(door)
+                            door.open = False
+            if self.boss.win:
+                for door in self.door_list:
+                    if door.associate == 5:
+                        if not door.open:
+                            door.texture = door.off
+                            self.all_list.remove(door)
+                            self.alt_all_list.remove(door)
+                            door.open = True
+
             p = False
             for i in self.grapple_list:
                 x_diff = self.player.center_x - i.center_x
@@ -732,7 +782,18 @@ class Game(arcade.View):
             else:
                 self.rope.center_x = -1000
                 self.rope.center_y = -1000
-            if not self.interacting:
+            if self.bossbattle_prelude == 0 and self.inside_bossroom:
+                self.boss_battle = True
+                self.boss.start = True
+                self.boss.alpha = 254
+                self.boss.gun.alpha = 254
+            if self.bossbattle_prelude > 0 and self.inside_bossroom:
+                self.bossbattle_prelude -= 1
+                self.boss.gun.alpha = (250 * ((201 - self.bossbattle_prelude)/200)) + 1
+                self.boss.alpha = (250 * ((201 - self.bossbattle_prelude)/200)) + 1
+                character_offset_x = int(self.boss.center_x) - int(self.view_left + (SCREEN_WIDTH // 2))
+                character_offset_y = int(self.boss.center_y) - int(self.view_bottom + (SCREEN_HEIGHT // 2))
+            elif not self.interacting:
                 character_offset_x = int(self.player.center_x) - int(self.view_left + (SCREEN_WIDTH // 2))
                 character_offset_y = int(self.player.center_y) - int(self.view_bottom + (SCREEN_HEIGHT // 2))
             else:
@@ -745,7 +806,10 @@ class Game(arcade.View):
                                                               * 0.4)
             if not self.interacting:
                 # if self.view_left != (int(self.player.center_x - (SCREEN_WIDTH // 2))) or self.player.attacking:
-                self.view_left = self.view_left + ((character_offset_x // 10) + self.player.change_x * 1.2)
+                if self.bossbattle_prelude > 0 and self.inside_bossroom:
+                    self.view_left = self.view_left + (character_offset_x // 10)
+                else:
+                    self.view_left = self.view_left + ((character_offset_x // 10) + self.player.change_x * 1.2)
                 if self.view_left <= 0 + SCREEN_WIDTH*SCREEN_ALT:
                     self.view_left = 0 + SCREEN_WIDTH*SCREEN_ALT
                 elif self.view_left >= len(self.my_map.layers[0].layer_data[0])*48 - SCREEN_WIDTH*(1+SCREEN_ALT):
@@ -777,18 +841,18 @@ class Game(arcade.View):
             self.player.x_t = self.x_t + self.view_left - (SCREEN_WIDTH*SCREEN_ALT)
             self.player.y_t = self.y_t + self.view_bottom - (SCREEN_HEIGHT*SCREEN_ALT)
 
-            if self.player.joystick:
+            """if self.player.joystick:
                 c = arcade.check_for_collision_with_list(self.player, self.interactables_list)
                 if not c:
                     self.player.E = False
                 if self.player.E:
                     self.e()
                 elif not self.player.E:
-                    self.anti_e()
+                    self.anti_e()"""
 
             if self.player.beaning or self.player.beanter:
                 self.player.change_y += 1
-            if not self.interacting:
+            if self.boss_battle:
                 self.bossing()
             for beam in self.boss.attack_list:
                 if beam.can_it:
@@ -798,7 +862,13 @@ class Game(arcade.View):
                         self.player.health -= 1
                         self.health.texture = self.health.state[abs(self.player.health-4)]
                         if self.player.health <= 0:
-                            exit()
+                            self.respawning = False
+                            self.prev = self.saved_prev
+                            self.player.change_x = 0
+                            self.player.FACING = self.saved_facing
+                            self.current = self.reset_point
+                            self.load_level(arcade.tilemap.read_tmx(f"Worlds/Forest/{self.reset_point}.tmx"))
+                            self.reset_boss()
             wind = arcade.get_viewport()
             self.health.center_x = wind[0] + 640*0.3 + 10
             self.health.center_y = wind[3] - 160*0.3 - 10
@@ -827,9 +897,7 @@ class Game(arcade.View):
             for inter in self.interactables_list:
                 x_dist = abs(inter.center_x - self.player.center_x)
                 y_dist = abs(inter.center_y - self.player.center_y)
-                # angle = math.atan2(y_dist, x_dist)
                 dist = math.sqrt((x_dist ** 2) + (y_dist ** 2))
-                print("dist", dist)
                 if dist <= 280:
                     self.can_interact.center_x = inter.center_x
                     self.can_interact.center_y = inter.center_y
@@ -837,7 +905,6 @@ class Game(arcade.View):
                         self.can_interact.alpha = 254
                     else:
                         self.can_interact.alpha = 280 - dist
-                # 66 burrel road, 7ish
 
             b = False
             for i in self.turret_list:
@@ -866,7 +933,12 @@ class Game(arcade.View):
             self.shade.alpha = 255 * (((math.cos(self.end_times - math.pi)) / 2) + 0.5) // 1
             if self.shade.alpha >= 250:
                 if self.player.health <= 0:
-                    exit()
+                    self.respawning = False
+                    self.prev = self.saved_prev
+                    self.player.change_x = 0
+                    self.player.FACING = self.saved_facing
+                    self.current = self.reset_point
+                    self.load_level(arcade.tilemap.read_tmx(f"Worlds/Forest/{self.reset_point}.tmx"))
                 else:
                     self.respawning = False
                     self.player.center_x = self.res_act.center_x
@@ -910,7 +982,8 @@ class Game(arcade.View):
         self.grass_list.draw()
         self.detail_list.draw()
         self.grapple_list.draw()
-        self.boss.on_draw()
+        if self.inside_bossroom:
+            self.boss.on_draw()
         self.can_interact.draw()
         self.curs.draw()
         self.shade.draw()
@@ -992,8 +1065,8 @@ class Game(arcade.View):
     def on_mouse_motion(self, x: float, y: float, dx: float, dy: float):
         screen_bottom = self.view_bottom - (SCREEN_HEIGHT*SCREEN_ALT)
         screen_left = self.view_left - (SCREEN_WIDTH*SCREEN_ALT)
-        self.curs.center_y = screen_bottom
-        self.curs.center_x = screen_left
+        # self.curs.center_y = screen_bottom
+        # self.curs.center_x = screen_left
         self.x = x + screen_left
         self.y = y + screen_bottom
 
@@ -1020,7 +1093,6 @@ class Game(arcade.View):
             del letter
 
     def stop_doing_shit(self):
-        self.E = True
         self.S = False
         self.grappling = False
         self.player.grapling = False
@@ -1121,15 +1193,17 @@ class Game(arcade.View):
         target.identify = target.identify * -1
 
     def bossing(self):
-        # self.boss.update()  # this will activate the dormant boss
-        diff_x = self.player.center_x - self.boss.gun.center_x
-        diff_y = self.player.center_y - self.boss.gun.center_y
+        self.boss.update()  # this will activate the dormant boss
+        diff_x = self.player.center_x - self.boss.center_x
+        diff_y = self.player.center_y - self.boss.center_y
         angley = math.atan2(diff_y, diff_x)
-        self.boss.gun.angle = math.degrees(angley)
-        if self.boss.gun.angle > 90 or self.boss.gun.angle < -90:
-            self.boss.texture = arcade.load_texture("Enemy/b2.png", mirrored=True)
-        else:
-            self.boss.texture = arcade.load_texture("Enemy/b2.png", mirrored=False)
+        self.boss.angletoplayer = math.degrees(angley)
+
+    def reset_boss(self):
+        self.inside_bossroom = False
+        self.boss_battle = False
+        self.bossbattle_prelude = -1
+        self.boss.reset()
 
 
 class Letter(arcade.Sprite):

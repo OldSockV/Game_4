@@ -101,6 +101,9 @@ class Conv(arcade.Sprite):
             self.texture = arcade.load_texture("Text/textbox_self_mult2.png")
         else:
             self.texture = arcade.load_texture("Text/textbox_self_mult3.png")
+        self.select = 1
+        self.output = self.conv['inp'][0]
+        self.act_1()
         self.remove_hand()
         self.read_list()
         self.act_2()
@@ -163,6 +166,8 @@ class Conv(arcade.Sprite):
     def act_2(self):
         """The response printed"""
         self.interact = True
+        self.remove_hand()
+        self.output = ""
         self.response = text.gen_letter_list(
             self.conv['start'][0],
             (self.center_x - self.width // 2 + (self.width // 18 * 5)), (self.center_y +
@@ -327,9 +332,9 @@ class Conv(arcade.Sprite):
 class ChattOption:
     def __init__(self):
         self.faces = []
-        for i in range(5):
-            for b in range(7):
-                texture = arcade.load_texture("Text/pentagons2.png", x=480 * b, y=480 * i,
+        for y in range(5):
+            for x in range(7):
+                texture = arcade.load_texture("Text/pentagons2.png", x=480 * x, y=480 * y,
                                               height=480, width=480, mirrored=False)
                 self.faces.append(texture)
         self.face = {
