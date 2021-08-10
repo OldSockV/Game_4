@@ -1376,7 +1376,6 @@ class Tutorial(arcade.View):
         super().__init__()
         arcade.set_background_color((20, 18, 24))
         self.sheet_list = arcade.SpriteList()
-        self.point = 0
         self.words = [
             "",
             "",
@@ -1441,6 +1440,7 @@ class Tutorial(arcade.View):
             "  without pressing any direction to propell yourself in",
             "  the opposite direction of the wall."
         ]
+        self.point = 0
         self.back = MenueScreens()
         self.dicts = [self.words, self.movement, self.ledge, self.conversations, self.doors, self.walljump]
 
