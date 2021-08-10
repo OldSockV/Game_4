@@ -402,8 +402,8 @@ class Game(arcade.View):
             self.gate_list = arcade.process_layer(self.my_map, 'Gate',
                                                   0.3, use_spatial_hash=False)
             if self.prev is None:
-                self.player.center_x = 400
-                self.player.center_y = 600
+                self.player.center_x = 540
+                self.player.center_y = 48*12
             else:
                 for i in self.gate_list:
                     if f"{i.properties['dest']}.tmx" == f"{self.prev}.tmx":
@@ -587,7 +587,7 @@ class Game(arcade.View):
         self.backdrop.texture = arcade.load_texture("Backdrop/Scene1.png")
         self.backdrop.center_x = 2000
         self.backdrop.center_y = 1000
-        self.backdrop.scale = 0.3
+        self.backdrop.scale = 3
         """for i in range(5):
             boi = enemy.TestEnemy(self.player)
             boi.center_x = random.randint(100, 6000)
@@ -836,8 +836,8 @@ class Game(arcade.View):
                     self.view_bottom = self.target_y - SCREEN_HEIGHT//2
                 self.conv.update()
 
-            self.backdrop.center_x = (2000 + self.view_left // 2) - ((self.backdrop.width//5)*2)
-            self.backdrop.center_y = (1000 + self.view_bottom // 6) - (self.backdrop.height//4)
+            self.backdrop.center_x = (3100 + self.view_left // 2) - ((self.backdrop.width//5)*2)
+            self.backdrop.center_y = (1600 + self.view_bottom // 6) - (self.backdrop.height//4)
             self.player.x_t = self.x_t + self.view_left - (SCREEN_WIDTH*SCREEN_ALT)
             self.player.y_t = self.y_t + self.view_bottom - (SCREEN_HEIGHT*SCREEN_ALT)
 
@@ -1279,11 +1279,333 @@ class Target(arcade.Sprite):
         self.angle = 45
 
 
+class Last(arcade.View):
+    def __init__(self):
+        super().__init__()
+        self.start_overgrowth = False
+        self.end_overgrowth = False
+        self.overt = Titlecards()
+        self.end_timer = 0
+        self.end_overgrowth = False
+        self.start_timer = 0
+
+    def on_show(self):
+        self.overt.texture = self.overt.text_list[3]
+        self.overt.center_x = SCREEN_WIDTH // 2
+        self.overt.center_y = SCREEN_HEIGHT // 2
+
+    def on_draw(self):
+        arcade.start_render()
+        self.overt.draw()
+
+    def update(self, delta_time: float):
+        self.start_timer += 1
+        if self.start_timer == 100:
+            self.start_overgrowth = True
+        if self.start_overgrowth:
+            self.end_timer += 2
+            self.overt.alpha = self.end_timer
+            if self.overt.alpha >= 250:
+                self.start_overgrowth = False
+                self.end_overgrowth = True
+                self.end_timer += 100
+        elif self.end_overgrowth:
+            self.end_timer -= 2
+            if self.end_timer <= 255:
+                self.overt.alpha = self.end_timer
+                if self.overt.alpha <= 5:
+                    game = Game()
+                    self.window.show_view(game)
+
+    def on_key_press(self, symbol: int, modifiers: int):
+        game = Game()
+        self.window.show_view(game)
+
+
+class TutorialSheet(arcade.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.texture = arcade.load_texture("")
+
+
+class Tutorial(arcade.View):
+    def __init__(self):
+        super().__init__()
+        arcade.set_background_color((20, 18, 24))
+        self.sheet_list = arcade.SpriteList()
+        self.point = 0
+        self.words = [
+            "Here are my instructions of all the features of the game.",
+            "",
+            "",
+            "",
+            "      [PRESS ANY KEY TO CONTINUE]"
+        ]
+        self.conversations = [
+            "Controlling Conversations:",
+            "  When presented with 1 to 4 choices (at the bottom)",
+            "  the player can use the [1, 2, 3, 4] keys to select one.",
+            "  Then press [E] or [ENTER] to continue.",
+            "  If no options are presented, press [E] or [ENTER] to",
+            "  continue the conversation.",
+            "",
+            "  Sometimes the selected choice will stay after the ",
+            "  conversation continues, so if the selected text stays ",
+            "  after you pressed E or enter, just ignore it.",
+        ]
+        self.back = MenueScreens()
+        self.dicts = [self.words, self.conversations]
+
+    def cycle(self, dict):
+        p = 0
+        for i in self.sheet_list[::-1]:
+            i.remove_from_sprite_lists()
+            del i
+        for i in dict:
+            hand = text.gen_letter_list(dict[p],
+                                        40,
+                                        (SCREEN_HEIGHT - (60*p) - 40), 0.25)
+            self.sheet_list.extend(hand)
+            p += 1
+
+    def on_show(self):
+        self.cycle(self.words)
+        self.back.center_x = SCREEN_WIDTH//2
+        self.back.center_y = SCREEN_HEIGHT//2
+        self.back.texture = self.back.back_list[1]
+        self.back.scale = self.back.scale_list[1]
+
+    def on_draw(self):
+        arcade.start_render()
+        self.back.draw()
+        self.sheet_list.draw()
+        """for i in self.sheet_list:
+            i.draw()"""
+
+    def on_key_press(self, symbol: int, modifiers: int):
+        self.point += 1
+        if len(self.dicts) == self.point:
+            game = Chooses()
+            self.window.show_view(game)
+        self.cycle(self.dicts[self.point])
+
+
+class Chooses(arcade.View):
+    def __init__(self):
+        super().__init__()
+        self.start = Buttons()
+        self.start.type = 0
+        self.instruct = Buttons()
+        self.instruct.type = 1
+        self.exitbut = Buttons()
+        self.exitbut.type = 2
+        self.buttons = arcade.SpriteList()
+        self.buttons.append(self.start)
+        self.buttons.append(self.instruct)
+        self.buttons.append(self.exitbut)
+        self.shade = Shade()
+        self.select = Select()
+        self.sadmouse = Select()
+        self.sadmouse.texture = arcade.load_texture("Backdrop/mouse.png")
+
+        self.back = MenueScreens()
+
+    def on_show(self):
+        i = 0
+        for but in self.buttons:
+            i += 1
+            but.center_x = 200
+            but.center_y = 300 - i*80
+            but.texture = but.back_list[but.type]
+        self.shade.center_x = SCREEN_WIDTH//2
+        self.shade.center_y = SCREEN_HEIGHT//2
+        self.shade.alpha = 255
+        self.back.center_x = SCREEN_WIDTH//2
+        self.back.center_y = SCREEN_HEIGHT//2
+        self.back.texture = self.back.back_list[2]
+        self.back.scale = self.back.scale_list[2]
+        self.select.center_x = self.start.center_x - 160
+        self.select.center_y = self.start.center_y
+
+    def on_draw(self):
+        arcade.start_render()
+        self.back.draw()
+        self.buttons.draw()
+        self.select.draw()
+        self.shade.draw()
+
+    def update(self, delta_time: float):
+        if self.shade.alpha >= 1:
+            self.shade.alpha -= 1
+
+    def on_mouse_motion(self, x: float, y: float, dx: float, dy: float):
+        self.sadmouse.center_x = x
+        self.sadmouse.center_y = y
+        if arcade.check_for_collision_with_list(self.sadmouse, self.buttons):
+            for i in self.buttons:
+                if arcade.check_for_collision(i, self.sadmouse):
+                    self.select.center_x = i.center_x - 160
+                    self.select.center_y = i.center_y
+
+    def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
+        if arcade.check_for_collision_with_list(self.sadmouse, self.buttons):
+            for i in self.buttons:
+                if arcade.check_for_collision(i, self.sadmouse):
+                    if i.type == 0:
+                        game = Last()
+                        self.window.show_view(game)
+                    elif i.type == 1:
+                        game = Tutorial()
+                        self.window.show_view(game)
+                    elif i.type == 2:
+                        exit()
+
+
+class Start(arcade.View):
+    def __init__(self):
+        super().__init__()
+        self.back = MenueScreens()
+        self.tit = Titlecards()
+        self.back.type = 0
+        self.und_tit = Titlecards()
+        self.guide = Titlecards()
+        self.tit.type = 0
+        self.shade = Shade()
+        self.und_tit.type = 1
+        self.timer = 0
+        self.timer2 = 0
+        self.start_timer = 250
+        self.distant_fin = False
+        self.act_going = False
+        self.final = False
+        self.final_timer = 0
+        self.end_timer = 0
+        self.proceed = False
+
+    def on_show(self):
+        self.shade.center_x = SCREEN_WIDTH // 2
+        self.shade.center_y = SCREEN_HEIGHT // 2
+
+        self.back.texture = self.back.back_list[0]
+        self.back.scale = self.back.scale_list[0]
+        self.back.center_x = SCREEN_WIDTH // 2
+        self.back.center_y = SCREEN_HEIGHT // 2
+
+        self.tit.texture = self.tit.text_list[0]
+        self.tit.center_x = SCREEN_WIDTH // 2
+        self.tit.center_y = SCREEN_HEIGHT // 2
+
+        self.und_tit.texture = self.und_tit.text_list[1]
+        self.und_tit.center_x = SCREEN_WIDTH // 2
+        self.und_tit.center_y = SCREEN_HEIGHT // 2
+
+        self.guide.texture = self.guide.text_list[2]
+        self.guide.center_x = SCREEN_WIDTH // 2
+        self.guide.center_y = SCREEN_HEIGHT // 4
+
+        arcade.set_viewport(0, SCREEN_WIDTH,
+                            0, SCREEN_HEIGHT)
+
+    def on_draw(self):
+        arcade.start_render()
+        self.back.draw()
+        self.tit.draw()
+        self.und_tit.draw()
+        self.guide.draw()
+        self.shade.draw()
+
+    def update(self, delta_time: float):
+        if self.proceed:
+            self.end_timer += 3
+            self.shade.alpha = self.end_timer
+            if self.shade.alpha >= 250:
+                self.shade.alpha = 255
+                game = Chooses()
+                self.window.show_view(game)
+        if self.start_timer >= 5:
+            self.start_timer -= 3
+            self.shade.alpha = self.start_timer
+        else:
+            self.timer += 2
+            if not self.distant_fin:
+                self.tit.alpha = self.timer
+                if self.tit.alpha >= 250:
+                    self.distant_fin = True
+                elif self.timer == 160:
+                    self.act_going = True
+            if self.act_going:
+                self.timer2 += 3
+                self.und_tit.alpha = self.timer2
+                if self.und_tit.alpha >= 250:
+                    self.act_going = False
+                    self.final = True
+            elif self.final:
+                self.final_timer += 1.5
+                if self.final_timer >= 100:
+                    self.guide.alpha = int(self.final_timer - 100)
+                    if self.final_timer >= 260:
+                        self.final = False
+
+    def on_key_press(self, symbol: int, modifiers: int):
+        self.proceed = True
+
+
+class Shade(arcade.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.texture = arcade.load_texture("Misc_level_stuff/Shade.png")
+        self.scale = 20
+        self.alpha = 250
+
+
+class Select(arcade.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.texture = arcade.load_texture("Backdrop/select.png")
+
+
+class Buttons(arcade.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.type = 0
+        t1 = arcade.load_texture("Backdrop/Buttons1.png")
+        t2 = arcade.load_texture("Backdrop/Buttons2.png")
+        t3 = arcade.load_texture("Backdrop/Buttons3.png")
+        self.back_list = [t1, t2, t3]
+        self.texture = self.back_list[0]
+
+
+class MenueScreens(arcade.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.type = 0
+        t1 = arcade.load_texture("Backdrop/Spec_backgroundblue.png")
+        t2 = arcade.load_texture("Backdrop/Forest_back2.png")
+        t3 = arcade.load_texture("Backdrop/anime train.png")
+        self.back_list = [t1, t2, t3]
+        self.scale_list = [0.6, 1.2, 0.95]
+        self.texture = self.back_list[0]
+
+
+class Titlecards(arcade.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.alpha = 1
+        self.type = 0
+        t1 = arcade.load_texture("Backdrop/Texts1.png")
+        t2 = arcade.load_texture("Backdrop/Texts2.png")
+        t3 = arcade.load_texture("Backdrop/Texts3.png")
+        t4 = arcade.load_texture("Backdrop/Texts4.png")
+        self.text_list = [t1, t2, t3, t4]
+        self.texture = self.text_list[0]
+
+
 def main():
     """ Main method """
     window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, "GAME", fullscreen=False)
     window.center_window()
-    game = Game()
+    # game = Game()
+    game = Start()
     window.show_view(game)
     arcade.run()
 
