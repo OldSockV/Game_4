@@ -589,7 +589,7 @@ class Game(arcade.View):
         self.backdrop.scale = 3
 
         """---------Start Level----------"""
-        self.load_level(arcade.read_tmx("Worlds/Forest/S6_boss.tmx"))
+        self.load_level(arcade.read_tmx("Worlds/Forest/S6_1.tmx"))
 
     def update(self, delta_time: float):
         if self.game_end:
