@@ -359,9 +359,6 @@ class TestPlayer(arcade.Sprite):
         elif (key == arcade.key.W or key == arcade.key.SPACE or key == arcade.key.UP) and self.beanter:
             self.change_y = 25
             self.change_x = 15
-        if key == arcade.key.J:
-            a = self.skipp[0]
-            a()
 
     def on_key_release(self, key: int, _modifiers: int):
         if key == arcade.key.A:

@@ -1,6 +1,6 @@
 import arcade
 import text
-import math
+# import math
 import random
 import conversations
 
@@ -61,16 +61,16 @@ class Conv(arcade.Sprite):
             '23': [None, 1, 1],
             '123': [1, 1, 1]
         }
-        self.effects = {
+        """self.effects = {
             'wobble': self.wobble,
             'shake': self.shake
-        }
+        }"""
         self.list = [self.response, self.response1, self.response2]
 
         self.conv = self.storage['1']
         self.selected = self.types['123']
 
-    def wobble(self, letter):
+    """def wobble(self, letter):
         letter.center_y = letter.origin[1] + math.sin(letter.displacement / 10) * 10
         letter.displacement += 1
 
@@ -78,15 +78,7 @@ class Conv(arcade.Sprite):
         letter.center_y = letter.origin[1] + random.randint(-2, 2)
         letter.center_x = letter.origin[0] + random.randint(-2, 2)
         # letter.center_y += random.randint(-5, 5)
-        # letter.center_x += random.randint(-5, 5)
-
-    def update(self):
-        """its the update."""
-        """for listed in self.list:
-            if listed is not None:
-                for letter in listed:
-                    self.wobble(letter)
-                    self.shake(letter)"""
+        # letter.center_x += random.randint(-5, 5)"""
 
     def conversation(self, tree_name):  # , tree_phase, effect, effect_nums):
         """Controlls conversation progression"""
@@ -125,10 +117,6 @@ class Conv(arcade.Sprite):
             self.response2.draw()
         if self.printed_text is not None:
             self.printed_text.draw()
-            # Shaking going fucking balistic
-            """for i in self.printed_text:
-                i.center_x += random.randint(-10, 10)
-                i.center_y += random.randint(-10, 10)"""
         if self.printed_text_list is not None:
             self.printed_text_list.draw()
 
@@ -208,8 +196,6 @@ class Conv(arcade.Sprite):
         """if the response is two blocks long this prints before the normal response"""
         self.remove_hand()
         self.interact = True
-        one = False
-        two = False
         if self.conv['face1'] != '':
             one = True
         else:
@@ -307,7 +293,7 @@ class Conv(arcade.Sprite):
             else:
                 self.switch_chatt = True
                 self.twice_fin = False
-                self.conversation(tree_name=self.conv['next'][self.select -1])
+                self.conversation(tree_name=self.conv['next'][self.select - 1])
                 self.interact = False
             self.list = [self.response, self.response1, self.response2]
 

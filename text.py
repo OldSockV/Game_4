@@ -132,12 +132,3 @@ def gen_letter_list(string: str = None, s_x: float = 0, s_y: float = 0, scale: f
             prev_letter_width = space_width.width
             prev_letter_pos = (s_x + spacing)
     return letter_list
-
-
-class Conversation:
-    def __init__(self):
-        self.texted = 0
-        self.happy = "happy"
-        self.annoyed = "annoyed"
-        self.angry = "angry"
-        self.chatt = [self.happy, self.annoyed, self.angry]
