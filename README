@@ -29,3 +29,6 @@ if youre bad... git gud.
 otherwise you can press "3" to go back to full health
 theres no visual change, so if your health bar stays at 1 health it will 
 update once you take damage.
+
+
+IMPORTANT: you will need to set up a 3.8 python interpreter via pycharm.
