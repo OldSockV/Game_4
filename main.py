@@ -136,6 +136,9 @@ class Game(arcade.View):
         self.reset_point = 'S6_1'
         self.saved_prev = None
         self.saved_facing = 0
+        self.game_end = False
+        self.ready = False
+        self.dramatimer = 0
 
         self.boss_battle = False
         self.inside_bossroom = False
@@ -600,10 +603,21 @@ class Game(arcade.View):
 
         # self.interacting = True
         """---------Start Level----------"""
-        self.load_level(arcade.read_tmx("Worlds/Forest/S6_1.tmx"))
+        self.load_level(arcade.read_tmx("Worlds/Forest/S6_boss.tmx"))
 
     def update(self, delta_time: float):
-        if not self.respawning:
+        if self.game_end:
+            if not self.ready:
+                if self.shade.alpha <= 250:
+                    self.shade.alpha += 2
+                else:
+                    self.dramatimer += 1
+                    if self.dramatimer >= 80:
+                        self.interacting = True
+                        self.shade.alpha = 255
+                        self.conv.setup(tree='end', enter='talk')
+                        self.ready = True
+        elif not self.respawning:
             if self.shade.alpha > 4:
                 self.end_times -= 0.3
                 self.shade.alpha = 255 * (((math.cos(self.end_times - math.pi)) / 2) + 0.5) // 1
@@ -1119,42 +1133,71 @@ class Game(arcade.View):
             # if self.my_map.layers[self.numb_interact].layer_data[31-y][x] != 0:
             for i in self.interactables_list:
                 if arcade.check_for_collision(i, self.player):
-                    self.E = False
-                    text_tree = i.properties['tree']
-                    if i.properties['talk']:
-                        text_type = 'talk'
+                    if i.properties['tree'] == 'end':
+                        self.game_end = True
+                        self.shade.alpha = 0
+                        self.stop_doing_shit()
+                        self.target_x = self.player.center_x
+                        self.target_y = self.player.center_y + SCREEN_HEIGHT // 12
+                        self.conv.center_x = self.player.center_x
+                        if self.player.center_x - SCREEN_WIDTH // 2 <= 0:
+                            self.conv.center_x = SCREEN_WIDTH // 2
+                        elif self.player.center_x + SCREEN_WIDTH // 2 >= len(self.my_map.layers[0].layer_data[0]) * 48:
+                            self.conv.center_x = len(self.my_map.layers[0].layer_data[0]) * 48 - SCREEN_WIDTH // 2
+                        self.conv.center_y = self.player.center_y - SCREEN_HEIGHT // 3
+                        if self.player.center_y - SCREEN_HEIGHT // 3 - 100 <= 0:
+                            self.conv.center_y = SCREEN_HEIGHT // 6
+                        self.view_left = self.player.center_x - SCREEN_WIDTH // 2
+                        self.view_bottom = self.player.center_y - SCREEN_HEIGHT // 2
+                        if self.view_left <= 0:
+                            self.view_left = 0
+                        elif self.view_left >= (len(self.my_map.layers[0].layer_data[0]) * 48) - SCREEN_WIDTH:
+                            self.view_left = (len(self.my_map.layers[0].layer_data[0]) * 48) - SCREEN_WIDTH
+                        if self.view_bottom <= 0:
+                            self.view_bottom = 0
+                        elif self.view_bottom >= len(self.my_map.layers[0].layer_data) * 48:
+                            self.view_bottom = len(self.my_map.layers[0].layer_data) * 48
+                        arcade.set_viewport(self.view_left // 1,
+                                            (SCREEN_WIDTH + self.view_left - 1) // 1,
+                                            self.view_bottom // 1,
+                                            (SCREEN_HEIGHT + self.view_bottom - 1) // 1)
                     else:
-                        text_type = 'invest'
-                    self.stop_doing_shit()
-                    self.interacting = True
-                    self.target_x = self.player.center_x
-                    self.target_y = self.player.center_y + SCREEN_HEIGHT // 12
-                    self.conv.center_x = self.player.center_x
-                    if self.player.center_x - SCREEN_WIDTH // 2 <= 0:
-                        self.conv.center_x = SCREEN_WIDTH // 2
-                    elif self.player.center_x + SCREEN_WIDTH // 2 >= len(self.my_map.layers[0].layer_data[0]) * 48:
-                        self.conv.center_x = len(self.my_map.layers[0].layer_data[0]) * 48 - SCREEN_WIDTH // 2
-                    self.conv.center_y = self.player.center_y - SCREEN_HEIGHT // 3
-                    if self.player.center_y - SCREEN_HEIGHT // 3 - 100 <= 0:
-                        self.conv.center_y = SCREEN_HEIGHT // 6
+                        self.E = False
+                        text_tree = i.properties['tree']
+                        if i.properties['talk']:
+                            text_type = 'talk'
+                        else:
+                            text_type = 'invest'
+                        self.stop_doing_shit()
+                        self.interacting = True
+                        self.target_x = self.player.center_x
+                        self.target_y = self.player.center_y + SCREEN_HEIGHT // 12
+                        self.conv.center_x = self.player.center_x
+                        if self.player.center_x - SCREEN_WIDTH // 2 <= 0:
+                            self.conv.center_x = SCREEN_WIDTH // 2
+                        elif self.player.center_x + SCREEN_WIDTH // 2 >= len(self.my_map.layers[0].layer_data[0]) * 48:
+                            self.conv.center_x = len(self.my_map.layers[0].layer_data[0]) * 48 - SCREEN_WIDTH // 2
+                        self.conv.center_y = self.player.center_y - SCREEN_HEIGHT // 3
+                        if self.player.center_y - SCREEN_HEIGHT // 3 - 100 <= 0:
+                            self.conv.center_y = SCREEN_HEIGHT // 6
 
-                    self.conv.setup(tree=text_tree, enter=text_type)
+                        self.conv.setup(tree=text_tree, enter=text_type)
 
-                    self.view_left = self.player.center_x - SCREEN_WIDTH // 2
-                    self.view_bottom = self.player.center_y - SCREEN_HEIGHT // 2
-                    if self.view_left <= 0:
-                        self.view_left = 0
-                    elif self.view_left >= (len(self.my_map.layers[0].layer_data[0]) * 48) - SCREEN_WIDTH:
-                        self.view_left = (len(self.my_map.layers[0].layer_data[0]) * 48) - SCREEN_WIDTH
-                    if self.view_bottom <= 0:
-                        self.view_bottom = 0
-                    elif self.view_bottom >= len(self.my_map.layers[0].layer_data) * 48:
-                        self.view_bottom = len(self.my_map.layers[0].layer_data) * 48
-                    arcade.set_viewport(self.view_left // 1,
-                                        (SCREEN_WIDTH + self.view_left - 1) // 1,
-                                        self.view_bottom // 1,
-                                        (SCREEN_HEIGHT + self.view_bottom - 1) // 1)
-                    self.timertoautofocus = 40
+                        self.view_left = self.player.center_x - SCREEN_WIDTH // 2
+                        self.view_bottom = self.player.center_y - SCREEN_HEIGHT // 2
+                        if self.view_left <= 0:
+                            self.view_left = 0
+                        elif self.view_left >= (len(self.my_map.layers[0].layer_data[0]) * 48) - SCREEN_WIDTH:
+                            self.view_left = (len(self.my_map.layers[0].layer_data[0]) * 48) - SCREEN_WIDTH
+                        if self.view_bottom <= 0:
+                            self.view_bottom = 0
+                        elif self.view_bottom >= len(self.my_map.layers[0].layer_data) * 48:
+                            self.view_bottom = len(self.my_map.layers[0].layer_data) * 48
+                        arcade.set_viewport(self.view_left // 1,
+                                            (SCREEN_WIDTH + self.view_left - 1) // 1,
+                                            self.view_bottom // 1,
+                                            (SCREEN_HEIGHT + self.view_bottom - 1) // 1)
+                        self.timertoautofocus = 40
 
     def hitted(self, target):
         for door in self.door_list:
@@ -1335,11 +1378,32 @@ class Tutorial(arcade.View):
         self.sheet_list = arcade.SpriteList()
         self.point = 0
         self.words = [
+            "",
+            "",
             "Here are my instructions of all the features of the game.",
             "",
+            "  [PRESS ANY KEY TO CONTINUE TO NEXT PAGE]",
+        ]
+        self.movement = [
+            "Movement:",
+            "  Movement is controlled by pressing [A] and [D].",
+            "  To jump press [W] or [SPACE].",
             "",
+            "  You can choose to fall through wooden platforms by",
+            "  pressing [S], allowing you to fall down through said",
+            "  platforms.",
+        ]
+        self.ledge = [
+            "Ledges and climbing:",
+            "  Some ledges are marked with a little wooden",
+            "  stake sticking out of the corner. If your",
+            "  character collides with its side, you will ",
+            "  automatically climb on top of the ground.",
             "",
-            "      [PRESS ANY KEY TO CONTINUE]"
+            "  The first time doing it from the left and",
+            "  right is ALWAYS laggy, there isnt really any",
+            "  way around it.",
+            "  Afterwards it should be smooth though."
         ]
         self.conversations = [
             "Controlling Conversations:",
@@ -1353,8 +1417,32 @@ class Tutorial(arcade.View):
             "  conversation continues, so if the selected text stays ",
             "  after you pressed E or enter, just ignore it.",
         ]
+        self.doors = [
+            "Doors and Levers:",
+            "  Doors are brightly lit blocks that stop you from",
+            "  progressing through a level, a faded semi translucent",
+            "  door is open, and can be moved through.",
+            "  To open and close a door, stand next to a lever and",
+            "  press [E] to switch it.",
+            "  All doors and levers are connected by colour, so when",
+            "  a blue lever is pulled, all blue doors in the level",
+            "  will switch its state, from closed to open and vice versa.",
+            "  When some doors open others close. And some levels require",
+            "  you to go back to previously closed areas."
+        ]
+        self.walljump = [
+            "Walljump extra:",
+            "  Small mechanic to remember for second half of the game,",
+            "  when you are connected to a wall, you dont have to hold",
+            "  yourself against the wall, they will stay there until you jump,",
+            "  move in the other direction, or fall off.",
+            "",
+            "Additionally: if you are connected to a wall you can jump ",
+            "  without pressing any direction to propell yourself in",
+            "  the opposite direction of the wall."
+        ]
         self.back = MenueScreens()
-        self.dicts = [self.words, self.conversations]
+        self.dicts = [self.words, self.movement, self.ledge, self.conversations, self.doors, self.walljump]
 
     def cycle(self, dict):
         p = 0
