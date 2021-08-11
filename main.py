@@ -188,7 +188,9 @@ class Game(arcade.View):
 
     def load_level(self, level):
         """This is the Level loading program.
-           it runs through and checks all the layers and lists that may """
+           it runs through and checks all the layers and lists that may be in the tiled level,
+           and assigns the sprites to a sprite list.
+           also handles all gates, doors, and interactibles."""
         self.my_map = level
         self.wall_list = arcade.tilemap.process_layer(self.my_map, 'Platforms',
                                                       0.3, use_spatial_hash=True)
@@ -1075,6 +1077,7 @@ class Game(arcade.View):
             self.player.on_mouse_release(button)
 
     def anti_e(self):
+        """Exits the conversation box"""
         self.interacting = False
         self.player.interacting = False
         for letter in self.text_list[::-1]:
@@ -1082,6 +1085,7 @@ class Game(arcade.View):
             del letter
 
     def stop_doing_shit(self):
+        """Resets the player, stopping all active buttons."""
         self.S = False
         self.grappling = False
         self.player.grapling = False
@@ -1096,6 +1100,7 @@ class Game(arcade.View):
         self.player.gun.center_y = -100
 
     def e(self):
+        """Function ran when checking for interaction"""
         self.E = True
         if self.numb_interact is not None:
             for i in self.interactables_list:
@@ -1167,6 +1172,7 @@ class Game(arcade.View):
                         self.timertoautofocus = 40
 
     def hitted(self, target):
+        """When a activator is activated"""
         for door in self.door_list:
             if door.associate == target.associate:
                 if not door.open:
@@ -1205,6 +1211,7 @@ class Game(arcade.View):
         target.identify = target.identify * -1
 
     def bossing(self):
+        """Ran while bossbattle is active"""
         self.boss.update()
         diff_x = self.player.center_x - self.boss.center_x
         diff_y = self.player.center_y - self.boss.center_y
@@ -1212,6 +1219,7 @@ class Game(arcade.View):
         self.boss.angletoplayer = math.degrees(angley)
 
     def reset_boss(self):
+        """When leaving the boss room to reset them."""
         self.inside_bossroom = False
         self.boss_battle = False
         self.bossbattle_prelude = -1
@@ -1219,6 +1227,7 @@ class Game(arcade.View):
 
 
 class Letter(arcade.Sprite):
+    """Holds all the letters in my alphabet"""
     def __init__(self):
         super().__init__()
         self.capitals = []
@@ -1233,6 +1242,7 @@ class Letter(arcade.Sprite):
 
 
 class Health(arcade.Sprite):
+    """Sprite showing player health"""
     def __init__(self):
         super().__init__()
         self.state = []
@@ -1244,6 +1254,7 @@ class Health(arcade.Sprite):
 
 
 class PClimb(arcade.Sprite):
+    """The texture put on top of the player while climbing a ledge."""
     def __init__(self):
         super().__init__()
         self.cur_texture = 0
@@ -1275,6 +1286,7 @@ class PClimb(arcade.Sprite):
 
 
 class Curs(arcade.Sprite):
+    """Sprite holding the cursor sprite"""
     def __init__(self):
         super().__init__()
         self.texture = arcade.load_texture("Player/curs.png")
@@ -1282,6 +1294,7 @@ class Curs(arcade.Sprite):
 
 
 class Target(arcade.Sprite):
+    """While near an interactible this shows up to show where it is."""
     def __init__(self):
         super().__init__()
         self.texture = arcade.load_texture("Text/can_interact.png")
@@ -1290,6 +1303,7 @@ class Target(arcade.Sprite):
 
 
 class Last(arcade.View):
+    """The view shown right before the game starts."""
     def __init__(self):
         super().__init__()
         self.start_overgrowth = False
@@ -1332,13 +1346,8 @@ class Last(arcade.View):
         self.window.show_view(game)
 
 
-class TutorialSheet(arcade.Sprite):
-    def __init__(self):
-        super().__init__()
-        self.texture = arcade.load_texture("")
-
-
 class Tutorial(arcade.View):
+    """The Tutorial screen"""
     def __init__(self):
         super().__init__()
         arcade.set_background_color((20, 18, 24))
@@ -1412,6 +1421,7 @@ class Tutorial(arcade.View):
         self.dicts = [self.words, self.movement, self.ledge, self.conversations, self.doors, self.walljump]
 
     def cycle(self, dicts):
+        """Cycles through the pages in the tutorial, and moves to the next slide."""
         p = 0
         for i in self.sheet_list[::-1]:
             i.remove_from_sprite_lists()
@@ -1444,6 +1454,7 @@ class Tutorial(arcade.View):
 
 
 class Chooses(arcade.View):
+    """The train screen, where you can access the tutorial, proceed to the game, and exit."""
     def __init__(self):
         super().__init__()
         self.start = Buttons()
@@ -1515,6 +1526,7 @@ class Chooses(arcade.View):
 
 
 class Start(arcade.View):
+    """The start animatic showing the title card."""
     def __init__(self):
         super().__init__()
         self.back = MenueScreens()
