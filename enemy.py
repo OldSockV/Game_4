@@ -1,3 +1,6 @@
+"""
+This file is not in use for this version of the game as i couldnt fit an enemy into the game neatly
+"""
 import arcade
 import math
 import random
@@ -8,6 +11,7 @@ GRAVITY = 0
 
 
 class TestEnemy(arcade.Sprite):
+    """Test bat enemy, no longer in use"""
     def __init__(self, player):
         super().__init__()
         self.cur_texture = 0

@@ -1,3 +1,7 @@
+"""
+This file contains all the conversation dictionaries used in conv2
+"""
+
 enter_level = {
     "S6_1": {
         "1": {

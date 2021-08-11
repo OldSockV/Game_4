@@ -4,6 +4,7 @@ import random
 
 
 class Boss(arcade.Sprite):
+    """The final boss of the game"""
     def __init__(self):
         super().__init__()
         self.texture = arcade.load_texture("Enemy/eye thingy-Sheet.png", x=0, y=0, height=384, width=384)
@@ -37,6 +38,11 @@ class Boss(arcade.Sprite):
             self.attack_list.draw()
 
     def update(self):
+        """
+        Basically, the boss cycles through phases moving through its attacks, until it reaches phase 3,
+        then moves on to the next round, where difficulty is increased.
+        Once it reaches a specific round and phase, the boss will stop fighting. and the exit will open.
+        """
         self.t += 1
         self.skin.center_x = self.center_x
         self.skin.center_y = self.center_y
@@ -100,6 +106,7 @@ class Boss(arcade.Sprite):
                 del attk
 
     def reset(self):
+        """Turns off the boss for when you win, if you were to move between levels before the end of the fight."""
         for i in self.attack_list[::-1]:
             i.remove_from_sprite_lists()
             del i
@@ -115,6 +122,7 @@ class Boss(arcade.Sprite):
 
 
 class Gun(arcade.Sprite):
+    """The Eye of the boss, which shoots the targeting lazers"""
     def __init__(self):
         super().__init__()
         self.texture = arcade.load_texture("Enemy/eye thingy-Sheet.png", x=384, y=0, height=384, width=384)
@@ -122,12 +130,14 @@ class Gun(arcade.Sprite):
 
 
 class skin(arcade.Sprite):
+    """The gray exterior shell of the boss"""
     def __init__(self):
         super().__init__()
         self.texture = arcade.load_texture("Enemy/eye thingy-Sheet.png", x=384*2, y=0, height=384, width=384)
 
 
 class Beam(arcade.Sprite):
+    """The beam attack produced by the boss"""
     def __init__(self):
         super().__init__()
         self.texture = arcade.load_texture("Enemy/beam.png")

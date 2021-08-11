@@ -1,3 +1,6 @@
+"""
+Turret function i intended to place in some puzzle levels but never ended up using.
+"""
 import arcade
 
 
@@ -66,6 +69,7 @@ class BigGun(arcade.Sprite):
 
 
 class BigBeam(arcade.Sprite):
+    """The attack sprite of the turrets."""
     def __init__(self):
         super().__init__()
         self.texture = arcade.load_texture("Player/Beam.png")

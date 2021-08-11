@@ -298,6 +298,7 @@ class Conv(arcade.Sprite):
             self.list = [self.response, self.response1, self.response2]
 
     def reset(self):
+        """Resets the text functions"""
         self.printed_text = None
         self.printed_text1 = None
         self.printed_text2 = None
@@ -317,6 +318,7 @@ class Conv(arcade.Sprite):
 
 
 class ChattOption:
+    """Holds images related to the chatt box, currently only Face-Icons"""
     def __init__(self):
         self.faces = []
         for y in range(5):

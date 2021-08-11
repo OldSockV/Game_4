@@ -10,6 +10,7 @@ GRAVITY = 0
 
 
 class TestPlayer(arcade.Sprite):
+    """Contains the player class and all its features"""
     def __init__(self):
         super().__init__()
         self.cur_texture = 0
@@ -122,23 +123,6 @@ class TestPlayer(arcade.Sprite):
         self.FACING = 0
         self.is_climbing = False
 
-        joysticks = arcade.get_joysticks()
-
-        if joysticks:
-            # Grab the first one in  the list
-            self.joystick = joysticks[0]
-
-            # Open it for input
-            self.joystick.open()
-            self.joystickduolingo = None
-
-            # Push this object as a handler for joystick events.
-            # Required for the on_joy* events to be called.
-            self.joystick.push_handlers(self)
-        else:
-            # Handle if there are no joysticks.
-            self.joystick = None
-            self.joystickduolingo = None
         self.interacting = False
 
         self.workpleasex = 0
@@ -174,6 +158,7 @@ class TestPlayer(arcade.Sprite):
                 self.texture = self.walking[self.FACING][self.cur_texture // 4]
 
     def jump(self):
+        """I put jumping in a class cause it was easier to track in the code."""
         self.change_y = 20
 
     def setup(self):
@@ -182,30 +167,6 @@ class TestPlayer(arcade.Sprite):
 
     def update(self):
         self.update_animation()
-        if not self.interacting:
-            if self.joystick:
-                # x-axis
-                if self.joystick.x < 0.3:
-                    self.D = False
-                if self.joystick.x > -0.3:
-                    self.A = False
-                if self.joystick.x >= 0.3:
-                    self.D = True
-                elif self.joystick.x <= -0.3:
-                    self.A = True
-            if self.joystick:
-                if abs(self.joystick.hat_x) >= 0.3 or abs(self.joystick.hat_y) >= 0.3:
-                    self.x = self.joystick.hat_x
-                    self.y = self.joystick.hat_y
-                    self.x_t = self.x - self.workpleasex
-                    self.y_t = self.y - self.workpleasey
-                    # angle = math.atan2(diff_y, diff_x)
-                    self.attacking = True
-                if self.joystick.y >= 0.3:
-                    self.S = True
-                else:
-                    self.S = False
-
         if self.attacking or self.grapling:
             t = 1
         else:
@@ -316,28 +277,6 @@ class TestPlayer(arcade.Sprite):
                 puff.scale = 0.6
                 self.effect_list.append(puff)
 
-    def on_joybutton_press(self, _joystick, button):
-        """ Handle button-down event for the joystick """
-        if not self.interacting:
-            if button == 1:
-                if self.physics_engines[0].can_jump():
-                    self.jump()
-                elif self.beaning and self.jumps >= 1:
-                    self.jumps -= 1
-                    self.change_y = 25
-                    self.change_x = -15
-                elif self.beanter and self.jumps >= 1:
-                    self.jumps -= 1
-                    self.change_y = 25
-                    self.change_x = 15
-            elif button == 5:
-                self.Q = True
-        if button == 4:
-            if self.E:
-                self.E = False
-            elif not self.E:
-                self.E = True
-
     def on_key_press(self, key: int):
         if key == arcade.key.A:
             self.A = True
@@ -384,6 +323,7 @@ class TestPlayer(arcade.Sprite):
 
 
 class Gun(arcade.Sprite):
+    """Contains the gun associated with the player."""
     def __init__(self):
         super().__init__()
         self.texture = arcade.load_texture("Player/gun.png")
@@ -412,6 +352,7 @@ class Gun(arcade.Sprite):
 
 
 class Bullet(arcade.Sprite):
+    """Contains the bullet sprite"""
     def __init__(self):
         super().__init__()
         self.texture = arcade.load_texture("Player/Bullet2.png")
@@ -420,6 +361,7 @@ class Bullet(arcade.Sprite):
 
 
 class Smoke(arcade.Sprite):
+    """Contains the little smoke particles that appear while in the air"""
     def __init__(self):
         super().__init__()
         self.texture = arcade.load_texture("Spritesheets/smoke.png", x=0, y=0, height=320, width=320)
@@ -447,6 +389,7 @@ class Smoke(arcade.Sprite):
 
 
 class Swipe(arcade.Sprite):
+    """A melee slash attack that is technically in the game (press Q) but has no purpose."""
     def __init__(self):
         super().__init__()
         self.stat = []

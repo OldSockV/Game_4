@@ -1,3 +1,8 @@
+"""
+This is a text generating code that i basically stole (with permission) from aedan, and was later
+improved upon by hugh. It allows me to put in a sting of letters and it will create a list of textures
+from my alphabet dictionary texture.
+"""
 import arcade
 from PIL import Image
 
