@@ -198,7 +198,7 @@ class Game(arcade.View):
         layer_list = []
         self.player.change_x = 0
         self.player.change_y = 0
-        for i in range(len(self.my_map.layers)):
+        for i in range(len(self.my_map.layers)):  # checks all map layers and records their position in the list.
             b = self.my_map.layers[i].name
             if b == "Gate":
                 self.numb = i
@@ -213,14 +213,17 @@ class Game(arcade.View):
             if b == 'Interactibles':
                 self.numb_interact = i
             layer_list.append(b)
-        if 'Shadow' in layer_list:
+
+        # all if "name" after this are checking if a layer is in the current map, and loading that map if it is.
+        if 'Shadow' in layer_list:  # check if layer in map
             self.shade_list = arcade.tilemap.process_layer(self.my_map, 'Shadow',
                                                            0.3, use_spatial_hash=False)
-            self.grass_list.extend(self.shade_list)
+            self.grass_list.extend(self.shade_list)  # Replace the list with the new layer
         else:
-            for i in self.shade_list[::-1]:
+            for i in self.shade_list[::-1]:  # Otherwise remove any items in the list from the previous level.
                 i.remove_from_sprite_lists()
                 del i
+        # every other module is exactly the same as this one so i will not repeat.
         if 'Grass' in layer_list:
             self.grass_list = arcade.tilemap.process_layer(self.my_map, 'Grass',
                                                            0.3, use_spatial_hash=False)
@@ -289,6 +292,8 @@ class Game(arcade.View):
             self.actuator_list = arcade.process_layer(self.my_map, 'Actuators',
                                                       0.3, use_spatial_hash=False)
             for i in self.actuator_list:
+                # give all items in this list its texture as a variable on level start
+                # so it can be used as an identifyer.
                 i.identify = 1
                 i.origin = i.texture
         else:
@@ -302,13 +307,15 @@ class Game(arcade.View):
             for i in self.door_list[::-1]:
                 i.remove_from_sprite_lists()
                 del i
-        if 'Turrets' in layer_list:
+        if 'Turrets' in layer_list:  # turrets have multiple states and need many lists to keep track
             turret_list_cord = arcade.process_layer(self.my_map, 'Turrets',
                                                     0.3, use_spatial_hash=False)
             turrettext_list = []
             turrettext_list2 = []
             turrettext_list3 = []
             for y in range(2):
+                # this code reads through all the different turret directions and checks each entry in the list to
+                # assign it to the appropriate list.
                 for i in range(6):
                     texture = arcade.load_texture("Tilesets/Turret_4.png", x=320 + (i * 320), y=0 + (320 * y),
                                                   height=320, width=320)
@@ -320,6 +327,7 @@ class Game(arcade.View):
                                                    height=320, width=320)
                     turrettext_list3.append(texture3)
             for i in turret_list_cord:
+                # sets up all turrets as sprites and gives them appropriate class and location.
                 first = i.texture
                 turret = Turrets.BigGun()
                 turret.texture = first
@@ -330,6 +338,7 @@ class Game(arcade.View):
                 turret.associate = self.example2[turret.texture]
 
             for turret in self.turret_list:
+                # assigns the appropriate directional variable and appropriate association variable.
                 if turret.associate >= 25:
                     turret.direct = "Right"
                     turret.associate -= 24
@@ -362,6 +371,8 @@ class Game(arcade.View):
                 y = math.floor(turret.center_y//48)
                 s = len(self.my_map.layers[0].layer_data)
                 b = 0
+                # checks distance from turret to nearest wall in the beam path to create a laser that only goes as far
+                # as to just hit the nearest wall.
                 if turret.direct == 'Left':
                     while self.my_map.layers[self.numb_platforms].layer_data[s - y][x - b] == 0:
                         b += 1
@@ -395,6 +406,8 @@ class Game(arcade.View):
             self.levers = arcade.process_layer(self.my_map, 'Levers',
                                                0.3, use_spatial_hash=False)
             for i in self.levers:
+                # give all items in this list its texture as a variable on level start
+                # so it can be used as an identifyer.
                 i.identify = 1
                 i.origin = i.texture
         else:
@@ -410,20 +423,27 @@ class Game(arcade.View):
             else:
                 for i in self.gate_list:
                     if f"{i.properties['dest']}.tmx" == f"{self.prev}.tmx":
+                        # this checks which was the previous level the player was in and places them
+                        # just outside the gate that leads back to that level so that it looks as though they passed
+                        # through a corridor from one level to another.
                         if self.player.FACING == 1:
                             move_val = -1
                         else:
                             move_val = 1
                         self.player.center_x = i.center_x + (move_val * 50)
                         self.player.center_y = i.center_y - 24
+        # that is all tile lists finished :)
 
+        """ a lot of code after this is dedicated to looking at all doors, actuators and doors and giving them the
+        appropriate association variable to connect it to the right colour chanel for activation"""
         alttext_list = []
         for p in range(2):
-            for i in range(6):
+            for i in range(6):  # cucles through all the images in the door sheet and saves it to a list
                 texture = arcade.load_texture("Tilesets/act-Sheet.png", x=i * 160, y=480 - (p * 160), height=160,
                                               width=160)
                 alttext_list.append(texture)
         for door in self.door_list:
+            # this gives all doors their on or off state, and their association value
             door.associate = self.example[door.texture]
             if door.associate >= 6:
                 door.open = True
@@ -435,7 +455,7 @@ class Game(arcade.View):
                 door.off = alttext_list[door.associate - 1]
                 door.open = False
         alttext_list1 = []
-        for i in range(6):
+        for i in range(6):  # this does the exact same as the door code except for the actuators.
             texture = arcade.load_texture("Tilesets/act-Sheet.png", x=i * 160, y=160, height=160, width=160)
             alttext_list1.append(texture)
         for hit in self.actuator_list:
@@ -444,7 +464,7 @@ class Game(arcade.View):
             hit.open = True
             hit.off = alttext_list1[hit.associate - 1]
         alttext_list2 = []
-        for i in range(7):
+        for i in range(7):  # this does the exact same as the door code except for the levers.
             texture = arcade.load_texture("Tilesets/Levers.png", x=i * 320, y=320, height=320, width=320)
             alttext_list2.append(texture)
         for lev in self.levers:
@@ -453,6 +473,7 @@ class Game(arcade.View):
             lev.on = False
             lev.off = alttext_list2[lev.associate]
 
+        # releoading all collision lists for the physics engine so that it wont stack multiple physics engines.
         self.all_list = None
         self.all_list = arcade.SpriteList()
         self.all_list.extend(self.wall_list)
@@ -480,9 +501,11 @@ class Game(arcade.View):
             if door.open:
                 self.all_list.remove(door)
                 self.alt_all_list.remove(door)
-        self.player.health = 4
+        self.player.health = 4  # regen player to full
         self.health.texture = self.health.state[abs(self.player.health - 4)]
 
+        # special conditions for these levels, activating events in these levels like unlocking abilities, setting the
+        # new major checkpoint, and starting the bossfight room.
         if self.current == "S6_win":
             self.ableto_wall_jump = True
             self.reset_point = 'S6_win'
@@ -510,13 +533,17 @@ class Game(arcade.View):
             self.boss.skin.center_x = self.boss.center_x
             self.boss.skin.center_y = self.boss.center_y
 
+        # check for if the player has already been in the current room so that a entering room conversation doesnt
+        # appear twice. If this is the first time, it will start a conversation with the same name as the level.
         if (self.current not in self.ventures and self.current in conversations.enter_level) or (self.current is None):
             self.ventures.append(self.current)
-            self.stop_doing_shit()
-            self.interacting = True
+            self.stop_doing_shit()  # stops all player variables
+            self.interacting = True  # stops the player from being able to move and use other abilities
             self.target_x = self.player.center_x
             self.target_y = self.player.center_y + SCREEN_HEIGHT // 12
             self.conv.center_x = self.player.center_x
+            # sets the screen in a sensible position so that it doesnt clip outside the map and keeps the player
+            # in focus
             if self.player.center_x - SCREEN_WIDTH//2 <= 0:
                 self.conv.center_x = SCREEN_WIDTH//2
             elif self.player.center_x + SCREEN_WIDTH//2 >= len(self.my_map.layers[0].layer_data[0]) * 48:
@@ -524,12 +551,18 @@ class Game(arcade.View):
             self.conv.center_y = self.player.center_y - SCREEN_HEIGHT // 3
             if self.player.center_y - SCREEN_HEIGHT//3 - 100 <= 0:
                 self.conv.center_y = SCREEN_HEIGHT//6
+
             if self.current is not None:
                 if self.current in conversations.enter_level:
+                    # reads the conversation dictionary and checks if there
+                    # is a conversation tree with the same name as the loaded level.
                     self.conv.setup(tree=self.current, enter='enter')
             else:
+                # this is used for the start level because it returns "None"
                 self.conv.setup(tree="S6_1", enter='enter')
                 self.ventures.append("S6_1")
+
+            # sets the screen in the right place.
             self.view_left = self.player.center_x - SCREEN_WIDTH//2
             self.view_bottom = self.player.center_y - SCREEN_HEIGHT//2
             if self.view_left <= 0:
@@ -546,6 +579,11 @@ class Game(arcade.View):
                                 (SCREEN_HEIGHT + self.view_bottom - 1) // 1)
 
     def setup(self):
+        """
+            Its the setup.
+            Innitialise all the sprite_lists,
+            and set important x's and y's.
+        """
         self.wall_list = arcade.SpriteList()
         self.back_list = arcade.SpriteList()
         self.back_list2 = arcade.SpriteList()
@@ -581,6 +619,7 @@ class Game(arcade.View):
         self.rope.center_y = -100
         self.rope.scale = 0.1
 
+        # just fixing the player hitbox to better fit the character build and ignore the scarf flapping.
         self.player.set_hit_box(((-50.0, -130.0), (-30.0, -160.0), (30.0, -160.0), (50.0, -140.0), (50.0, 100.0),
                                  (20.0, 130.0), (-30.0, 130.0), (-50.0, 100.0)))
 
@@ -594,24 +633,29 @@ class Game(arcade.View):
         self.load_level(arcade.read_tmx("Worlds/Forest/S6_1.tmx"))
 
     def update(self, delta_time: float):
-        if self.game_end:
-            if not self.ready:
+        if self.game_end:  # runs if the player activates the endscreen
+            if not self.ready:  # transition to black
                 if self.shade.alpha <= 250:
                     self.shade.alpha += 2
                 else:
                     self.dramatimer += 1
-                    if self.dramatimer >= 80:
+                    if self.dramatimer >= 80:  # activate the final conversation, and final thanks.
+                        # (basically end the game)
                         self.interacting = True
                         self.shade.alpha = 255
                         self.conv.setup(tree='end', enter='talk')
                         self.ready = True
-        elif not self.respawning:
-            if self.shade.alpha > 4:
+        elif not self.respawning:  # if the player isnt currently dead, run the game normally
+            if self.shade.alpha > 4:  # at some points the screen is dark, and this transitions it back to bright.
                 self.end_times -= 0.3
                 self.shade.alpha = 255 * (((math.cos(self.end_times - math.pi)) / 2) + 0.5) // 1
                 if self.shade.alpha <= 4:
                     self.shade.alpha = 0
                     self.end_times = 0
+
+            # this is a check for all the things that decide wether or not you should pass through platforms.
+            # if you are either: pressing S, is jumping, or were inside a platform in the previous update,
+            # you will pass through.
             c = arcade.check_for_collision_with_list(self.player, self.platform_list)
             if self.player.change_y > 0 or self.S or self.second_platform_check or self.player.S:
                 self.player.physics_engines[1].update()
@@ -622,12 +666,15 @@ class Game(arcade.View):
             else:
                 self.second_platform_check = False
             self.enemy_list.update()
+
+            # check for if youre trying to flip a lever
             for lev in self.levers:
                 if arcade.check_for_collision(lev, self.player):
                     if self.E:
                         self.hitted(target=lev)
                         self.E = False
 
+            # check for if a bullet has hit a target, and run the door switching function if it did.
             for target in self.actuator_list:
                 collide = arcade.check_for_collision_with_list(target, self.player.bullet_list)
                 if collide:
@@ -638,6 +685,7 @@ class Game(arcade.View):
                             del bullet
                     self.hitted(target=target)
 
+            # check for if a bullet has hit an enemy, if yes, kill it.
             for boi in self.enemy_list:
                 boi.update_animation()
                 boi.enemy_physics_engine.update()
@@ -650,6 +698,7 @@ class Game(arcade.View):
                             del bullet
                     boi.remove_from_sprite_lists()
                     del boi
+            # check for if a bullet has hit a wall
             for bullet in self.player.bullet_list:
                 if not bullet.swipe:
                     c = arcade.check_for_collision_with_list(bullet, self.alt_all_list)
@@ -658,6 +707,9 @@ class Game(arcade.View):
                         del bullet
 
             """ ----------- LEDGE-CLIMBING ----------- """
+            # this handles when the player comes into contact with a climbable ledge, checking one pixel to the right
+            # and left of the player for contact. if they are, the player is teleported on top of the ledge tile and
+            # is deactivated, then an animation of the player climbing the ledge plays.
             if not self.player.physics_engines[1].can_jump() and not self.player.grapling:
                 self.player.center_x += 1
                 if arcade.check_for_collision_with_list(self.player, self.ledges):
@@ -690,6 +742,9 @@ class Game(arcade.View):
                 self.player.center_x += 1
 
             ''' ----------- WALL-JUMPING ----------- '''
+            # this is a long bit of code that works a lot similarly to arcades built in "can_jump()" program
+            # moving the player one pixel left and right, checking if its touching a wall, every update.
+            # if the player is, they start hugging the wall and their descent is slowed drastically.
             if not self.player.physics_engines[1].can_jump() and not self.player.grapling and self.ableto_wall_jump:
                 self.player.center_x += 1
                 if arcade.check_for_collision_with_list(self.player, self.alt_all_list):
@@ -711,6 +766,7 @@ class Game(arcade.View):
                         self.player.change_y = -2
                     self.player.center_y += 96
 
+            # the animation of the player climbing the ledge is run here.
             if self.player.is_climbing:
                 self.player.change_y = 0
                 self.player.change_x = 0
@@ -724,20 +780,28 @@ class Game(arcade.View):
                     self.climb_guy.center_y = -100
                     self.climb_guy.center_x = -100
             else:
+                # player movement is tunred off if they are currently climbing a ledge
                 self.player.update()
             self.player.effect_list.update()
             self.player.bullet_list.update()
 
+            """ -- boss room explanation -- """
+            # a buch of checks for certain events in the boss room.
+            # for the boss fight to start a few things have to happend,
+            # for starters, the player has to be in the boss room.
+            # then, the player has to touch the respawn point in the middle of the room, wich starts the prelude.
+            # during this prelude the screen focuses on the boss as it wakes up, when a timer becomes zero,
+            # the camera returns to the player and the fight begins.
             if self.inside_bossroom and not self.boss_battle and self.bossbattle_prelude == -1:
                 if arcade.check_for_collision_with_list(self.player, self.res_list):
                     self.bossbattle_prelude = 200
-                    for door in self.door_list:
+                    for door in self.door_list:  # when the boss wakes up the doors on the left close.
                         if door.associate == 2:
                             door.texture = door.origin
                             self.all_list.append(door)
                             self.alt_all_list.append(door)
                             door.open = False
-            if self.boss.win:
+            if self.boss.win:  # when the player wins the doors on the right open up.
                 for door in self.door_list:
                     if door.associate == 5:
                         if not door.open:
@@ -746,12 +810,14 @@ class Game(arcade.View):
                             self.alt_all_list.remove(door)
                             door.open = True
 
+            # the grappling check looks for the closest grapple point, if that point is within 500px's then grappling
+            # can occur, otherwise nothing happens.
             p = False
             for i in self.grapple_list:
                 x_diff = self.player.center_x - i.center_x
                 y_diff = self.player.center_y - i.center_y
                 i.dist = math.sqrt((x_diff ** 2) + (y_diff ** 2))
-                if i.dist < 500:
+                if i.dist < 500:  # check the hypotenuse (distance to) the grapple point from the player.
                     self.attach_point_x = i.center_x
                     self.attach_point_y = i.center_y
                     if not self.grappling:
@@ -760,7 +826,10 @@ class Game(arcade.View):
             if not p:
                 self.grappling = False
 
+            # code that handles the grappling mechanic that actually isnt used in the game. ;(
+            # "p" is a check to make sure the player is still in range of the grapple point.
             if self.grappling and p:
+                # finds measurements relative to the point and player
                 self.player.grapling = True
                 self.player.physics_engines[0].gravity_constant = 0
                 diff_x = self.player.center_x - self.attach_point_x
@@ -768,14 +837,18 @@ class Game(arcade.View):
                 self.grapple_angle = math.atan2(diff_y, diff_x)
                 self.grapple_dist = math.sqrt((diff_x ** 2) + (diff_y ** 2))
 
+                # math to find the right location for the rope between the player and point
                 self.rope.center_x = (self.player.center_x + self.attach_point_x) / 2
                 self.rope.center_y = (self.player.center_y + self.attach_point_y) / 2
-                grapple_acc = self.grapple_angle - math.pi/2
+                grapple_acc = self.grapple_angle - math.pi/2  # calculation of the expected acceleration of the grapple
                 if grapple_acc < 0:
                     grapple_acc += math.pi*2
+                # fancy calculations aedan helped me with that needed gravity constants to find the expected velocity
+                # of the player as they swing like spiderman across the ruins.
                 self.grapple_velocity += GRAVITY*1.4 * 0.4 * math.sin(grapple_acc)
                 self.grapple_angle += self.grapple_velocity * delta_time * 0.2
                 self.player.change_y = 0
+                # setting the players cords as the expected point using previos math.
                 self.player.center_x = self.attach_point_x + math.cos(self.grapple_angle) * self.origin_dist
                 self.player.center_y = self.attach_point_y + math.sin(self.grapple_angle) * self.origin_dist
 
@@ -784,34 +857,50 @@ class Game(arcade.View):
             else:
                 self.rope.center_x = -1000
                 self.rope.center_y = -1000
-            if self.bossbattle_prelude == 0 and self.inside_bossroom:
+
+            # as talked about before, in the boss room explanation.
+            if self.bossbattle_prelude == 0 and self.inside_bossroom:  # a timer check
                 self.boss_battle = True
                 self.boss.start = True
                 self.boss.alpha = 254
                 self.boss.gun.alpha = 254
-            if self.bossbattle_prelude > 0 and self.inside_bossroom:
+            if self.bossbattle_prelude > 0 and self.inside_bossroom:  # another timer check
+                # in here the boss waking up plays, and the camera is forced to focus on the boss.
                 self.bossbattle_prelude -= 1
                 self.boss.gun.alpha = (250 * ((201 - self.bossbattle_prelude)/200)) + 1
                 self.boss.alpha = (250 * ((201 - self.bossbattle_prelude)/200)) + 1
                 character_offset_x = int(self.boss.center_x) - int(self.view_left + (SCREEN_WIDTH // 2))
                 character_offset_y = int(self.boss.center_y) - int(self.view_bottom + (SCREEN_HEIGHT // 2))
-            elif not self.interacting:
+
+            elif not self.interacting:  # camera targeting when normal gameplay
+                # setting the target location for the camera to be on the player
                 character_offset_x = int(self.player.center_x) - int(self.view_left + (SCREEN_WIDTH // 2))
                 character_offset_y = int(self.player.center_y) - int(self.view_bottom + (SCREEN_HEIGHT // 2))
-            else:
+            else:  # camera targeting when in a conversation
+                # setting the target location as slightly above the conversation box
                 character_offset_x = int(self.target_x) - int(self.view_left + (SCREEN_WIDTH // 2))
                 character_offset_y = int(self.target_y) - int(self.view_bottom + (SCREEN_HEIGHT // 2))
-            if self.player.attacking:
+
+            if self.player.attacking:  # if the player is usning the gun, they can see much furhter than normal
                 character_offset_x = character_offset_x + int((self.x_t-(SCREEN_WIDTH+(SCREEN_WIDTH*SCREEN_ALT*2))//2)
                                                               * 0.6)
                 character_offset_y = character_offset_y + int((self.y_t-(SCREEN_HEIGHT+(SCREEN_HEIGHT*SCREEN_ALT*2))//2)
                                                               * 0.4)
             if not self.interacting:
                 if self.bossbattle_prelude > 0 and self.inside_bossroom:
+                    # removes the player movement addition so the camera doesnt wobble
+                    # if you move during the boss waking up scene
                     self.view_left = self.view_left + (character_offset_x // 10)
                 else:
+                    # small detail that when the player moves the camera kindof conpensates, pushing ahead as you run
                     self.view_left = self.view_left + ((character_offset_x // 10) + self.player.change_x * 1.2)
+
+                # checks for if the camera would reach outside of the map, and instead setting the corners of the screen
+                # to be the limits of the map instead. (eg, if the left side of the screen would become negative,
+                # it is set to zero instead.
                 if self.view_left <= 0 + SCREEN_WIDTH*SCREEN_ALT:
+                    # "screen_alt" is a variable that i use to chage how far back the camera is,
+                    # basically how much you can see.
                     self.view_left = 0 + SCREEN_WIDTH*SCREEN_ALT
                 elif self.view_left >= len(self.my_map.layers[0].layer_data[0])*48 - SCREEN_WIDTH*(1+SCREEN_ALT):
                     self.view_left = len(self.my_map.layers[0].layer_data[0])*48 - SCREEN_WIDTH*(1+SCREEN_ALT)
@@ -824,10 +913,11 @@ class Game(arcade.View):
                                                                                     self.view_left - 1)//1,
                                     (self.view_bottom - SCREEN_HEIGHT*SCREEN_ALT)//1, (SCREEN_HEIGHT*(1+SCREEN_ALT) +
                                                                                        self.view_bottom - 1)//1)
-
-            if self.timertoautofocus > 0:
+            if self.timertoautofocus > 0:  # timertoautofocus is a timer function.
                 self.timertoautofocus -= 1
             if self.interacting:
+                # if the player is interacting, the camera will instead focus on the
+                # item or character they are looking at instead of the player.
                 self.view_left = self.view_left + (character_offset_x // 10)
                 self.view_bottom = self.view_bottom + (character_offset_y // 10)
                 if 5 >= abs(self.target_x) - abs(self.view_left + (SCREEN_WIDTH // 2)) or self.timertoautofocus <= 0:
@@ -836,23 +926,32 @@ class Game(arcade.View):
                     self.view_bottom = self.target_y - SCREEN_HEIGHT//2
                 self.conv.update()
 
+            # setting the location of the background but at a delay, so as you move right it moves away much slower,
+            # creating the illusion that it is much furhter away.
             self.backdrop.center_x = (3100 + self.view_left // 2) - ((self.backdrop.width//5)*2)
             self.backdrop.center_y = (1600 + self.view_bottom // 6) - (self.backdrop.height//4)
+            # giving the player the location of the mouse.
             self.player.x_t = self.x_t + self.view_left - (SCREEN_WIDTH*SCREEN_ALT)
             self.player.y_t = self.y_t + self.view_bottom - (SCREEN_HEIGHT*SCREEN_ALT)
 
-            if self.player.beaning or self.player.beanter:
+            if self.player.beaning or self.player.beanter:  # check for if the player is climbing a wall
                 self.player.change_y += 1
-            if self.boss_battle:
+
+            if self.boss_battle:  # if the boss is active, it is updated.
                 self.bossing()
+
+            # running the checks for the bosses attacks, like if the player is hit.
             for beam in self.boss.attack_list:
                 if beam.can_it:
                     a = arcade.check_for_collision(beam, self.player)
                     if a and self.player.health > 0:
+                        # if the player is hit they will not return to the respawn point
+                        # but will instead simply lose one hp
                         beam.can_it = False
                         self.player.health -= 1
                         self.health.texture = self.health.state[abs(self.player.health-4)]
                         if self.player.health <= 0:
+                            # if the player dies, they return po the last major save point.
                             self.respawning = False
                             self.prev = self.saved_prev
                             self.player.change_x = 0
@@ -860,6 +959,9 @@ class Game(arcade.View):
                             self.current = self.reset_point
                             self.load_level(arcade.tilemap.read_tmx(f"Worlds/Forest/{self.reset_point}.tmx"))
                             self.reset_boss()
+
+            # this handles the location of the health, cursor,
+            # and the shade that tunrs the screen black.
             wind = arcade.get_viewport()
             self.health.center_x = wind[0] + 640*0.3 + 10
             self.health.center_y = wind[3] - 160*0.3 - 10
@@ -867,15 +969,16 @@ class Game(arcade.View):
             self.perm_y = self.y_t + self.view_bottom - (SCREEN_HEIGHT*SCREEN_ALT)
             self.curs.center_x = self.perm_x
             self.curs.center_y = self.perm_y
-
             self.shade.center_x = self.player.center_x
             self.shade.center_y = self.player.center_y
 
+            # sets a new revive point in a level when the player touches one.
             if arcade.check_for_collision_with_list(self.player, self.res_list):
                 for res in self.res_list:
                     if arcade.check_for_collision(res, self.player):
                         self.res_act = res
 
+            # checks if the player is touching an interactible, setting the "interactive" icon over it when close by
             if arcade.check_for_collision_with_list(self.player, self.interactables_list):
                 for inter in self.interactables_list:
                     if arcade.check_for_collision(inter, self.player):
@@ -885,11 +988,13 @@ class Game(arcade.View):
                 self.can_interact.center_x = -100
                 self.can_interact.center_y = -100
 
+            # takes the closest interactible and places a diamond shaped icon over it when close by,
+            # it becomes more opaque the closer you are.
             for inter in self.interactables_list:
                 x_dist = abs(inter.center_x - self.player.center_x)
                 y_dist = abs(inter.center_y - self.player.center_y)
                 dist = math.sqrt((x_dist ** 2) + (y_dist ** 2))
-                if dist <= 280:
+                if dist <= 280:  # maximum visible distance.
                     self.can_interact.center_x = inter.center_x
                     self.can_interact.center_y = inter.center_y
                     if dist <= 36:
@@ -897,6 +1002,7 @@ class Game(arcade.View):
                     else:
                         self.can_interact.alpha = 280 - dist
 
+            # makes it so that the player can only be hit by a laserbeam once.
             b = False
             for i in self.turret_list:
                 for beam in i.attack_list:
@@ -905,6 +1011,9 @@ class Game(arcade.View):
                         if s:
                             b = True
 
+            # checks for collision with the gates that transport the player between levels.
+            # when you collide with a gate, it reads the current level name, saves it as the previous level,
+            # and makes the new level the name of the gate, then loads that level.
             if arcade.check_for_collision_with_list(self.player, self.gate_list):
                 for i in self.gate_list:
                     if arcade.check_for_collision(i, self.player):
@@ -915,17 +1024,21 @@ class Game(arcade.View):
                         self.load_level(arcade.tilemap.read_tmx(f"Worlds/Forest/{i.properties['dest']}.tmx"))
                         self.view_left = self.player.center_x - SCREEN_WIDTH // 2
                         self.view_bottom = self.player.center_y - SCREEN_HEIGHT // 2
+
+            # checks for collision with environmental dangers, if the player comes into contact with one of these,
+            # the screen fades to black and you return at the previous save point.
             elif arcade.check_for_collision_with_list(self.player, self.barb_list) or b:
                 if self.player.health > 0:
                     self.player.health -= 1
                     self.health.texture = self.health.state[abs(self.player.health - 4)]
                     self.respawning = True
             self.turret_list.update()
-        else:
+        else:  # if the player is taking damage, the game stops and fades to black
             self.end_times += 0.1
             self.shade.alpha = 255 * (((math.cos(self.end_times - math.pi)) / 2) + 0.5) // 1
             if self.shade.alpha >= 250:
                 if self.player.health <= 0:
+                    # if the player has no health left, they return to the last major save location.
                     self.respawning = False
                     self.prev = self.saved_prev
                     self.player.change_x = 0
@@ -933,6 +1046,7 @@ class Game(arcade.View):
                     self.current = self.reset_point
                     self.load_level(arcade.tilemap.read_tmx(f"Worlds/Forest/{self.reset_point}.tmx"))
                 else:
+                    # if the player has at least one health left, they return to a revive point.
                     self.respawning = False
                     self.player.center_x = self.res_act.center_x
                     self.player.center_y = self.res_act.center_y
@@ -942,15 +1056,13 @@ class Game(arcade.View):
                     self.player.change_y = 0
 
     def on_draw(self):
+        """its the on draw, it renders the whole game"""
         arcade.start_render()
         self.backdrop.draw()
         self.back_list2.draw()
         self.back_list.draw()
-
         self.res_list.draw()
-
         self.interactables_list.draw()
-
         self.platform_list.draw()
         self.levers.draw()
         self.effect_list.draw()
@@ -969,27 +1081,27 @@ class Game(arcade.View):
         self.player.bullet_list.draw()
         self.shade_list.draw()
         self.turret_list.draw()
-        for turret in self.turret_list:
+        for turret in self.turret_list:  # some difficulties with the turret and its lasers
             turret.on_draw()
             turret.beam_list.update()
         self.grass_list.draw()
         self.detail_list.draw()
         self.grapple_list.draw()
-        if self.inside_bossroom:
+        if self.inside_bossroom:  # only draws the boss when in the boss room.
             self.boss.on_draw()
         self.can_interact.draw()
         self.curs.draw()
         self.shade.draw()
 
-        if self.interacting:
+        if self.interacting:  # shows the conversation box only when interacting.
             self.conv.on_draw()
         self.health.draw()
 
     def on_key_press(self, key: int, modifiers: int):
         if key == arcade.key.ESCAPE:
-            exit()
-        if not self.player.is_climbing:
-            if not self.interacting:
+            exit()  # exit key
+        if not self.player.is_climbing:  # stops player input while climing a ledge.
+            if not self.interacting:  # stops player input while in a conversation.
                 self.player.on_key_press(key)
                 if key == arcade.key.KEY_2:
                     self.player.center_y = 500
@@ -1006,7 +1118,7 @@ class Game(arcade.View):
                     self.S = True
                 elif key == arcade.key.E:
                     self.e()
-            else:
+            else:  # all buttons available when in a conversation.
                 self.conv.on_key_press(key)
                 if self.conv.exit_time:
                     self.anti_e()
@@ -1014,6 +1126,8 @@ class Game(arcade.View):
                 if key == arcade.key.P:
                     self.anti_e()
             if not self.interacting:
+                # all the "dev" shortcuts, like resetting health, teleporting, turning wall jump on earily,
+                # and remote controlling doors.
                 if key == arcade.key.KEY_1:
                     self.player.center_x = 500
                     self.player.center_y = 500
@@ -1036,6 +1150,9 @@ class Game(arcade.View):
         if not self.interacting:
             self.player.on_key_release(key, _modifiers)
             if key == arcade.key.LSHIFT and self.grappling:
+                # causes the player to sortof "jump" when releasing their grapple.
+                # the speed and direction of this thrust is dependant on the acceleration and velocity of the grapple
+                # pre-release.
                 self.grappling = False
                 self.player.grapling = False
                 self.player.physics_engines[0].gravity_constant = GRAVITY
@@ -1056,6 +1173,7 @@ class Game(arcade.View):
                 self.E = False
 
     def on_mouse_motion(self, x: float, y: float, dx: float, dy: float):
+        # records the mouse location and a few calculations for specific uses.
         screen_bottom = self.view_bottom - (SCREEN_HEIGHT*SCREEN_ALT)
         screen_left = self.view_left - (SCREEN_WIDTH*SCREEN_ALT)
         self.x = x + screen_left
@@ -1105,7 +1223,12 @@ class Game(arcade.View):
         if self.numb_interact is not None:
             for i in self.interactables_list:
                 if arcade.check_for_collision(i, self.player):
+                    # This chekcs the name of the tree given by the interactible against all conversations in the
+                    # dictionary file, and loads the conversation tied to that conversation.
                     if i.properties['tree'] == 'end':
+                        # special conversation that only runs for the end-of-game conversation, turning the screen
+                        # black before showing the conversation. other than that no difference,
+                        # for more detailed description, look at the next one where i explain the normal code.
                         self.game_end = True
                         self.shade.alpha = 0
                         self.stop_doing_shit()
@@ -1133,15 +1256,18 @@ class Game(arcade.View):
                                             (SCREEN_WIDTH + self.view_left - 1) // 1,
                                             self.view_bottom // 1,
                                             (SCREEN_HEIGHT + self.view_bottom - 1) // 1)
-                    else:
+
+                    else:  # runs for each conversation that isnt the end of game conversation.
                         self.E = False
-                        text_tree = i.properties['tree']
-                        if i.properties['talk']:
+                        text_tree = i.properties['tree']  # records the conversation name.
+                        if i.properties['talk']:  # checks what type it is.
                             text_type = 'talk'
                         else:
                             text_type = 'invest'
                         self.stop_doing_shit()
                         self.interacting = True
+
+                        # finds the right position for the conversation and the location the camera should focus on.
                         self.target_x = self.player.center_x
                         self.target_y = self.player.center_y + SCREEN_HEIGHT // 12
                         self.conv.center_x = self.player.center_x
@@ -1153,8 +1279,10 @@ class Game(arcade.View):
                         if self.player.center_y - SCREEN_HEIGHT // 3 - 100 <= 0:
                             self.conv.center_y = SCREEN_HEIGHT // 6
 
+                        # runs the conversaiton code from the conversation file
                         self.conv.setup(tree=text_tree, enter=text_type)
 
+                        # sets the screen in the right position
                         self.view_left = self.player.center_x - SCREEN_WIDTH // 2
                         self.view_bottom = self.player.center_y - SCREEN_HEIGHT // 2
                         if self.view_left <= 0:
@@ -1172,9 +1300,9 @@ class Game(arcade.View):
                         self.timertoautofocus = 40
 
     def hitted(self, target):
-        """When a activator is activated"""
-        for door in self.door_list:
-            if door.associate == target.associate:
+        """When a activator is activated this code runs"""
+        for door in self.door_list:  # runs through all doors in the level
+            if door.associate == target.associate:  # opens or closes all doors with the right colour.
                 if not door.open:
                     door.texture = door.off
                     self.all_list.remove(door)
@@ -1185,14 +1313,15 @@ class Game(arcade.View):
                     self.all_list.append(door)
                     self.alt_all_list.append(door)
                     door.open = False
-        for turret in self.turret_list:
-            if turret.associate == target.associate:
+        for turret in self.turret_list:  # runs through all turrets in the level
+            if turret.associate == target.associate:  # activates or deactivates all turrets with the right colour.
                 if turret.active:
                     turret.texture = turret.off
                     turret.active = False
                 else:
                     turret.texture = turret.origin
                     turret.active = True
+        # updates the physics engine to account for the ne open and closed doors.
         self.player.physics_engines = [None, None]
         self.physics_engine = arcade.PhysicsEnginePlatformer(
             self.player,
@@ -1204,14 +1333,15 @@ class Game(arcade.View):
             gravity_constant=GRAVITY)
         self.player.physics_engines[0] = self.physics_engine
         self.player.physics_engines[1] = self.physics_engine_plat
-        if target.identify == 1:
+        if target.identify == 1:  # changing the texture of the thing that was hit.
             target.texture = target.off
         else:
             target.texture = target.origin
-        target.identify = target.identify * -1
+        target.identify = target.identify * -1  # variable recording its on/off position.
 
     def bossing(self):
-        """Ran while bossbattle is active"""
+        """Ran while bossbattle is active
+        basically just updates the boss and finds the position of the player relative to the boss"""
         self.boss.update()
         diff_x = self.player.center_x - self.boss.center_x
         diff_y = self.player.center_y - self.boss.center_y
@@ -1278,6 +1408,7 @@ class PClimb(arcade.Sprite):
         self.die = False
 
     def update_animation(self, delta_time: float = 1/60):
+        """Runs through the whole animation then deletes itself."""
         self.cur_texture += 1
         if self.cur_texture >= (6 * 8) - 1:
             self.cur_texture = 0
@@ -1323,6 +1454,7 @@ class Last(arcade.View):
         self.overt.draw()
 
     def update(self, delta_time: float):
+        """Animates the OVERGROWTH titlecard to fade in, then out"""
         self.start_timer += 1
         if self.start_timer == 100:
             self.start_overgrowth = True
@@ -1342,16 +1474,18 @@ class Last(arcade.View):
                     self.window.show_view(game)
 
     def on_key_press(self, symbol: int, modifiers: int):
+        # allows the player to skip this screen
         game = Game()
         self.window.show_view(game)
 
 
 class Tutorial(arcade.View):
-    """The Tutorial screen"""
+    """Shows the tutorial screen"""
     def __init__(self):
         super().__init__()
         arcade.set_background_color((20, 18, 24))
         self.sheet_list = arcade.SpriteList()
+        # all these are the text that is displayed on the different pages.
         self.words = [
             "",
             "",
@@ -1418,6 +1552,7 @@ class Tutorial(arcade.View):
         ]
         self.point = 0
         self.back = MenueScreens()
+        # save all the pages to a list.
         self.dicts = [self.words, self.movement, self.ledge, self.conversations, self.doors, self.walljump]
 
     def cycle(self, dicts):
@@ -1434,6 +1569,7 @@ class Tutorial(arcade.View):
             p += 1
 
     def on_show(self):
+        # shows the first page
         self.cycle(self.words)
         self.back.center_x = SCREEN_WIDTH//2
         self.back.center_y = SCREEN_HEIGHT//2
@@ -1447,6 +1583,7 @@ class Tutorial(arcade.View):
 
     def on_key_press(self, symbol: int, modifiers: int):
         self.point += 1
+        # when the final page is turned, you are returned to the main screen
         if len(self.dicts) == self.point:
             game = Chooses()
             self.window.show_view(game)
@@ -1476,6 +1613,7 @@ class Chooses(arcade.View):
 
     def on_show(self):
         i = 0
+        # creates buttonns and other things.
         for but in self.buttons:
             i += 1
             but.center_x = 200
@@ -1499,10 +1637,12 @@ class Chooses(arcade.View):
         self.shade.draw()
 
     def update(self, delta_time: float):
+        # when entering this screen it is black, then fades into view.
         if self.shade.alpha >= 1:
             self.shade.alpha -= 1
 
     def on_mouse_motion(self, x: float, y: float, dx: float, dy: float):
+        # checks for touching the buttons, turning a button into the active button when touched.
         self.sadmouse.center_x = x
         self.sadmouse.center_y = y
         if arcade.check_for_collision_with_list(self.sadmouse, self.buttons):
@@ -1513,7 +1653,7 @@ class Chooses(arcade.View):
 
     def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
         if arcade.check_for_collision_with_list(self.sadmouse, self.buttons):
-            for i in self.buttons:
+            for i in self.buttons:  # if you clicked on a button the corresponding screen is opened.
                 if arcade.check_for_collision(i, self.sadmouse):
                     if i.type == 0:
                         game = Last()
@@ -1548,6 +1688,7 @@ class Start(arcade.View):
         self.proceed = False
 
     def on_show(self):
+        """ Setting all the elements in the intro screen """
         self.shade.center_x = SCREEN_WIDTH // 2
         self.shade.center_y = SCREEN_HEIGHT // 2
 
@@ -1580,6 +1721,8 @@ class Start(arcade.View):
         self.shade.draw()
 
     def update(self, delta_time: float):
+        """ Playing the fade in animation for all the elements. """
+        # its just a bunch of things fading in and out of view.
         if self.proceed:
             self.end_timer += 3
             self.shade.alpha = self.end_timer
@@ -1616,6 +1759,7 @@ class Start(arcade.View):
 
 
 class Shade(arcade.Sprite):
+    """ The dark screen to block the window """
     def __init__(self):
         super().__init__()
         self.texture = arcade.load_texture("Misc_level_stuff/Shade.png")
@@ -1624,12 +1768,14 @@ class Shade(arcade.Sprite):
 
 
 class Select(arcade.Sprite):
+    """ little icon showing the active button in train view """
     def __init__(self):
         super().__init__()
         self.texture = arcade.load_texture("Backdrop/select.png")
 
 
 class Buttons(arcade.Sprite):
+    """ The three buttons in main screen """
     def __init__(self):
         super().__init__()
         self.type = 0
@@ -1641,6 +1787,7 @@ class Buttons(arcade.Sprite):
 
 
 class MenueScreens(arcade.Sprite):
+    """ All backdrops before starting the actual game """
     def __init__(self):
         super().__init__()
         self.type = 0
@@ -1653,6 +1800,7 @@ class MenueScreens(arcade.Sprite):
 
 
 class Titlecards(arcade.Sprite):
+    """ all the titles for transition screens """
     def __init__(self):
         super().__init__()
         self.alpha = 1

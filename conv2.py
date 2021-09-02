@@ -20,6 +20,8 @@ class Conv(arcade.Sprite):
         self.secondary_icon = arcade.Sprite()
         self.secondary_icon.var = []
         self.active_icon.var = []
+
+        # Loads all the face icons in for the conversations as a list.
         for p in range(5):
             for i in range(7):
                 texture = arcade.load_texture("Text/pentagons2.png", x=480 * i, y=480 * p, height=480, width=480)
@@ -44,49 +46,27 @@ class Conv(arcade.Sprite):
         self.twice_fin = False
         self.inactive_available = False
         self.exit_time = False
-
-        self.conv = None
-        self.chatt = ChattOption()
-
         self.active_input = None
         self.active_output = None
         self.switch_chatt = False
 
-        self.types = {
-            '1': [1, None, None],
-            '2': [None, 1, None],
-            '3': [None, None, 1],
-            '12': [1, 1, None],
-            '13': [1, None, 1],
-            '23': [None, 1, 1],
-            '123': [1, 1, 1]
-        }
-        """self.effects = {
-            'wobble': self.wobble,
-            'shake': self.shake
-        }"""
-        self.list = [self.response, self.response1, self.response2]
-
+        self.conv = None
+        self.chatt = ChattOption()
         self.conv = self.storage['1']
-        self.selected = self.types['123']
 
-    """def wobble(self, letter):
-        letter.center_y = letter.origin[1] + math.sin(letter.displacement / 10) * 10
-        letter.displacement += 1
-
-    def shake(self, letter):
-        letter.center_y = letter.origin[1] + random.randint(-2, 2)
-        letter.center_x = letter.origin[0] + random.randint(-2, 2)
-        # letter.center_y += random.randint(-5, 5)
-        # letter.center_x += random.randint(-5, 5)"""
-
-    def conversation(self, tree_name):  # , tree_phase, effect, effect_nums):
-        """Controlls conversation progression"""
+    def conversation(self, tree_name):
+        """ Controlls conversation progression """
+        # Checks the name of the tree name that was issued,
+        # then runs through that branches dictionary, finding all the
+        # details needed to set up the chatt accordingly.
         if self.conv["next"][self.select - 1] is not None and self.switch_chatt:
-            self.conv = self.storage[tree_name]  # self.storage[self.conv["next"][self.select-1]]
+            self.conv = self.storage[tree_name]
             self.switch_chatt = False
+        # checks the icons to be used.
         self.active_icon.texture = self.chatt.face[self.conv['face1']]
         self.secondary_icon.texture = self.chatt.face[self.conv['face2']]
+        # if i leave the icon input blank it will select the correct texture so that only the sides of the box that has
+        # a face will have a border around it.
         if self.conv['face1'] != '' and self.conv['face2'] != '':
             self.texture = arcade.load_texture("Text/textbox_self_mult1.png")
         elif self.conv['face2'] == '' and self.conv['face1'] != '':
@@ -103,6 +83,7 @@ class Conv(arcade.Sprite):
         self.option_start()
 
     def remove_hand(self):
+        """ Code that removes dialogue choice icons """
         for hand in self.printed_text_list[::-1]:
             hand.remove_from_sprite_lists()
             del hand
@@ -111,6 +92,7 @@ class Conv(arcade.Sprite):
         self.draw()
         self.active_icon.draw()
         self.secondary_icon.draw()
+        # makes things only draw when they are actual text to stop crashes.
         if self.response is not None:
             self.response.draw()
             self.response1.draw()
@@ -122,6 +104,7 @@ class Conv(arcade.Sprite):
 
     def setup(self, tree, enter):
         self.reset()
+        # selecting the different dictionaries depeding on the type of information needed.
         if enter == 'enter':
             self.storage = conversations.enter_level[tree]
         elif enter == 'talk':
@@ -153,7 +136,7 @@ class Conv(arcade.Sprite):
             self.twice = True
 
     def act_2(self):
-        """The response printed"""
+        """ Reads the response list and generates up to three lines of text that is presented in the dialogue box """
         self.interact = True
         self.remove_hand()
         self.output = ""
@@ -189,11 +172,10 @@ class Conv(arcade.Sprite):
             p += 1
             i.origin = [i.center_x, i.center_y]
             i.displacement = p
-
         self.inactive_available = True
 
     def in_case_two(self):
-        """if the response is two blocks long this prints before the normal response"""
+        """if the response is two blocks long this makes the first block print before the rest of the response"""
         self.remove_hand()
         self.interact = True
         if self.conv['face1'] != '':
@@ -204,6 +186,7 @@ class Conv(arcade.Sprite):
             two = True
         else:
             two = False
+        # checks if the two parts of the text should have different faces.
         if "altface1" in self.conv:
             if self.conv["altface1"][self.select - 1] is not None:
                 self.active_icon.texture = self.chatt.face[self.conv["altface1"][self.select - 1]]
@@ -218,12 +201,15 @@ class Conv(arcade.Sprite):
                     two = True
                 else:
                     two = False
+        # changes the textbox borders according to the new faces.
         if one and two:
             self.texture = arcade.load_texture("Text/textbox_self_mult1.png")
         elif one and not two:
             self.texture = arcade.load_texture("Text/textbox_self_mult2.png")
         else:
             self.texture = arcade.load_texture("Text/textbox_self_mult3.png")
+
+        # sets the new conversation
         self.response = text.gen_letter_list(
             self.conv['resp'][self.select - 1][0],
             (self.center_x - self.width // 2 + (self.width // 18 * 5)),
@@ -258,7 +244,7 @@ class Conv(arcade.Sprite):
         self.twice_fin = True
 
     def option_start(self):
-        """Prints the options for the player"""
+        """ Prints the dialogue options for the player """
         for i in range(len(self.conv['inp'])):
             hand = text.gen_letter_list(self.conv['inp'][i],
                                         (self.center_x - self.width // 2 + (self.width / 5 * (i + 1)) + 4 + 100),
@@ -269,6 +255,7 @@ class Conv(arcade.Sprite):
 
     def on_key_press(self, key: int):
         if not self.interact:
+            # switching the selected dialogue choice with buttons 1-4
             if key == arcade.key.KEY_1:
                 self.select = 1
                 self.output = self.conv['inp'][0]
@@ -286,6 +273,7 @@ class Conv(arcade.Sprite):
                 self.output = self.conv['inp'][3]
                 self.act_1()
         if key == arcade.key.ENTER or key == arcade.key.E:
+            # when enter or E is pressed, the chosen dialogue choice continues the conversation
             if (self.conv['resp'][self.select - 1] is not None) and self.twice_fin is False:
                 self.in_case_two()
             elif self.conv['next'][self.select - 1] == "leave":
@@ -295,10 +283,9 @@ class Conv(arcade.Sprite):
                 self.twice_fin = False
                 self.conversation(tree_name=self.conv['next'][self.select - 1])
                 self.interact = False
-            self.list = [self.response, self.response1, self.response2]
 
     def reset(self):
-        """Resets the text functions"""
+        """ Resets the text functions to default """
         self.printed_text = None
         self.printed_text1 = None
         self.printed_text2 = None
@@ -318,7 +305,8 @@ class Conv(arcade.Sprite):
 
 
 class ChattOption:
-    """Holds images related to the chatt box, currently only Face-Icons"""
+    """ Holds all images of the Face-Icons
+    and assigns them to a dictionary with a name to be used in conversation code """
     def __init__(self):
         self.faces = []
         for y in range(5):

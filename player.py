@@ -39,6 +39,7 @@ class TestPlayer(arcade.Sprite):
         self.bullet_list = None
         self.effect_list = None
 
+        # puts all the textures into lists in Left / Right configuration for easy use
         self.idle = []
         self.idleR = []
         for i in range(4):
@@ -115,7 +116,6 @@ class TestPlayer(arcade.Sprite):
         self.climbing.append(self.climbingR)
         self.climbing.append(self.climbingL)
 
-        self.jumps = 3
         self.x = 0
         self.y = 0
         self.x_t = 0
@@ -131,6 +131,8 @@ class TestPlayer(arcade.Sprite):
         self.setup()
 
     def update_animation(self, delta_time: float = 1/60):
+        """ updates the animation that is appropriate for the situation """
+        # uses different counters for different animations
         self.cur_texture += 1
         self.cur_texture2 += 1
         if self.cur_texture >= 8 * 4:
@@ -142,10 +144,8 @@ class TestPlayer(arcade.Sprite):
         elif self.change_x < -1:
             self.FACING = 1
         if self.beanter:
-            # self.texture = self.sliding[0][self.cur_texture // 6]
             self.texture = arcade.load_texture("Player/slide.png")
         elif self.beaning:
-            # self.texture = self.sliding[1][self.cur_texture // 6]
             self.texture = arcade.load_texture("Player/slide.png", mirrored=True)
         elif not self.physics_engines[0].can_jump() and abs(self.change_x) > 10:
             self.texture = self.jump_text[self.FACING]
@@ -167,10 +167,13 @@ class TestPlayer(arcade.Sprite):
 
     def update(self):
         self.update_animation()
+        # "t" is a variable i use that controls the maximum speed of the character that depends on wether they are using
+        # the gun or not.
         if self.attacking or self.grapling:
             t = 1
         else:
             t = 6
+        # movement
         if self.A and self.change_x > -2*t:
             if self.change_x > 0:
                 self.change_x -= 1*t
@@ -185,17 +188,7 @@ class TestPlayer(arcade.Sprite):
             else:
                 self.change_x = self.change_x - (self.change_x/200)
 
-        """if not self.physics_engines[0].can_jump() and not self.beaning and not self.beanter:
-            self.roll = True
-        else:
-            self.roll = False
-            self.angle = 0
-        if self.roll:
-            if self.change_x < 0:
-                self.angle += 10
-            else:
-                self.angle -= 10"""
-
+        # does calculations for cun position and angle.
         if self.attacking:
             self.gun.center_x = self.center_x
             self.gun.center_y = self.center_y
@@ -211,8 +204,8 @@ class TestPlayer(arcade.Sprite):
         if self.physics_engines[0].can_jump() and self.change_y == 0:
             self.beaning = False
             self.beanter = False
-            self.jumps = 5
 
+        # more gun angle calculations
         diff_x = self.x_t - self.center_x
         diff_y = self.y_t - self.center_y
         self.gun.angle = math.degrees(math.atan2(diff_y, diff_x))
@@ -225,12 +218,15 @@ class TestPlayer(arcade.Sprite):
                 self.gun.texture = arcade.load_texture("Player/gun.png")
                 self.texture = arcade.load_texture("Player/guy_s.png")
         felice = False
+
+        # when the attack button is pressed the gun will begin the shooting animation
+        # and releases the bullet when the correct frame is active.
         if self.button:
             self.gun.shot = True
             if self.gun.cur_texture >= 8:
                 felice = True
                 self.button = False
-        if felice:
+        if felice:  # the code that fires off the bullet
             bullet = Bullet()
             diff_x = self.x_t - self.gun.center_x
             diff_y = self.y_t - self.gun.center_y
@@ -241,9 +237,9 @@ class TestPlayer(arcade.Sprite):
             bullet.change_x = math.cos(angle) * 20
             bullet.change_y = math.sin(angle) * 20
             self.bullet_list.append(bullet)
-        if self.gun.shot:
+        if self.gun.shot:  # when shooting, animate
             self.gun.update_animation()
-        if self.Q:
+        if self.Q:  # no longer important melee attack that works exactly like bullets except stationary
             swipe = Swipe()
             diff_x = self.x_t - self.center_x
             diff_y = self.y_t - self.center_y
@@ -256,6 +252,7 @@ class TestPlayer(arcade.Sprite):
             swipe.center_y = self.center_y + swipe.stored_y
             self.bullet_list.append(swipe)
             self.Q = False
+        # doing updates for bullets and removes them when they are far enough away.
         for bullet in self.bullet_list:
             bullet.update_animation()
             if ((bullet.center_x or bullet.center_y) < -100 or (bullet.center_x > 12000 or bullet.center_y > 4000)) \
@@ -268,6 +265,7 @@ class TestPlayer(arcade.Sprite):
                 if bullet.kill:
                     bullet.remove_from_sprite_lists()
                     del bullet
+        # when moving in air the player generates smoke particles. why? idk i wanted to.
         if self.change_y != 0:
             self.tim += 1
             if self.tim % 3 == 0:
@@ -278,6 +276,7 @@ class TestPlayer(arcade.Sprite):
                 self.effect_list.append(puff)
 
     def on_key_press(self, key: int):
+        """ Player control """
         if key == arcade.key.A:
             self.A = True
             if -2 < self.change_x and not self.attacking:

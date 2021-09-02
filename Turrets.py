@@ -19,12 +19,11 @@ class BigGun(arcade.Sprite):
     def on_draw(self):
         self.beam_list.draw()
         self.attack_list.draw()
-        """for beam in self.attack_list:
-            beam.draw_hit_box(arcade.color.RED)"""
 
     def update(self):
         if self.active:
             self.time += 1
+            # depending on the direction of the turret, different code for beam.
             if len(self.beam_list) == 0 and len(self.attack_list) == 0:
                 beam = BigBeam()
                 if self.direct == 'Left':
@@ -41,7 +40,7 @@ class BigGun(arcade.Sprite):
                     beam.angle = 0
                 beam.width = self.dist * 48
                 self.beam_list.append(beam)
-        for beam in self.beam_list:
+        for beam in self.beam_list:  # updating all attacks, slowly removing them and all that.
             beam.height += 2
             beam.alpha -= 2
             if beam.height >= 96:
@@ -54,13 +53,12 @@ class BigGun(arcade.Sprite):
                 attk.can_it = True
                 attk.width = self.dist*48
                 attk.height = 72
+                # makes the hit box correct. as some issues appeared beforehand.
                 attk.set_hit_box((((-self.dist*80), 110), ((-self.dist*80), -110), ((self.dist*80), -110), ((self.dist*80), 110)))
                 self.attack_list.append(attk)
                 beam.remove_from_sprite_lists()
                 del beam
         for attk in self.attack_list:
-            # attk.timer += 1
-            # if attk.timer >= 50:
             if not self.active:
                 attk.alpha -= 20
                 if attk.alpha < 30:

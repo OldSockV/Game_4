@@ -49,21 +49,23 @@ class Boss(arcade.Sprite):
         self.gun.center_x = self.center_x + math.cos(math.radians(self.angletoplayer)) * 20
         self.gun.center_y = self.center_y + math.sin(math.radians(self.angletoplayer)) * 20
         self.gun.angle = 0
-        if self.att_don > 100:
+        if self.att_don > 100:  # timer that is run when the cycle continues, moving from one phase to the next
             self.att_don = 0
             print("round", self.round, "| phase", self.phase)
-            if self.round == 1 and self.phase == 2:
+            if self.round == 1 and self.phase == 2:  # the win condition, when this level is completed, the battle ends.
                 self.win = True
                 print("game end")
                 self.phase = -1
                 self.round = -1
-            if not self.phase == 3:
+            if not self.phase == 3:  # increases the current phase
                 self.phase += 1
-            else:
+            else:  # every third phase the round increases.
                 self.phase = 1
                 self.round += 1
         if not self.win:
+            # self.t is the continuous timer that dictates when an attack can spawn.
             if self.t % 40 == 1 and (self.phase == 1 or self.round >= 1) and self.t > 0:
+                # this is the targeted beam that goes directly from the boss to the player.
                 beam = Beam()
                 beam.center_x = self.center_x + math.cos(math.radians(self.angletoplayer)) * 40
                 beam.center_y = self.center_y + math.sin(math.radians(self.angletoplayer)) * 40
@@ -72,6 +74,7 @@ class Boss(arcade.Sprite):
                 if self.phase == 1:
                     self.att_don += 10
             if self.t % 10 == 1 and (self.phase == 2 or self.round >= 2):
+                # the vertical beam that appears during the second phase
                 core = Beam()
                 core.center_y = self.center_y - 600
                 core.center_x = random.randint(int(self.center_x - 1400), int(self.center_x + 1400))
@@ -79,6 +82,7 @@ class Boss(arcade.Sprite):
                 self.beam_list.append(core)
                 self.att_don += 2
             if self.t % 30 == 1 and (self.phase == 3 or self.round >= 3):
+                # the horisontal beam that appears during the third phase.
                 core = Beam()
                 core.center_y = self.center_y + random.randint(-14, 10) * 40
                 core.center_x = 0
@@ -86,9 +90,11 @@ class Boss(arcade.Sprite):
                 if not self.round == 3:
                     self.att_don += 7
         for beam in self.beam_list:
+            # updating all the attacks from the boss, and spawning the actual damaging component.
             beam.scale += 0.4
             beam.alpha -= 2
             if beam.scale >= 20:
+                # when the attack reaches the needed width, the attack becomes white, and damaging for a short period
                 attk = Beam()
                 attk.center_x = beam.center_x
                 attk.center_y = beam.center_y
@@ -100,6 +106,7 @@ class Boss(arcade.Sprite):
                 beam.remove_from_sprite_lists()
                 del beam
         for attk in self.attack_list:
+            # the white damaging part stays for a very short period, being deleted briefly after fading away.
             attk.alpha -= 20
             if attk.alpha < 30:
                 attk.remove_from_sprite_lists()
